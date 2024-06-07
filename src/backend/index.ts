@@ -1,4 +1,5 @@
 import { Provider as ltijs } from 'ltijs'
+import esbuild from 'esbuild'
 import 'dotenv/config'
 import path from 'path'
 import * as t from 'io-ts'
@@ -18,7 +19,7 @@ ltijs.setup(
   { url: readEnvVariable('MONGODB_CONNECTION_URI') },
   {
     appUrl: '/lti-success',
-    staticPath: path.join(__dirname, './../../dist'), // Path to static files
+    staticPath: path.join(__dirname, './../../public'), // Path to static files
     cookies: {
       secure: false, // Set secure to true if the testing platform is in a different domain and https is being used
       sameSite: '', // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
@@ -26,10 +27,38 @@ ltijs.setup(
   },
 )
 
-// Opens Serlo editor
-ltijs.app.get('/app', async (_, res) => {
-  return res.sendFile(path.join(__dirname, '../../dist/index.html'))
+// Compiles `src/frontend/index.tsx` on the fly with esbuild to a bundled
+// JavaScript file.
+ltijs.app.get('/index.js', async (_, res) => {
+  res.setHeader('Content-Type', 'application/javascript')
+
+  try {
+    const result = await esbuild.build({
+      entryPoints: [path.join(__dirname, '..', 'frontend', 'index.tsx')],
+      bundle: true,
+      format: 'esm',
+      platform: 'browser',
+      write: false,
+      minify: true,
+      treeShaking: true,
+      define: {
+        'process.env.NEXT_PUBLIC_ENV': '"development"',
+        'process.env.__NEXT_STRICT_NEXT_HEAD': 'false',
+        'process.env.__NEXT_ROUTER_BASEPATH': 'false',
+        'process.env.__NEXT_SCROLL_RESTORATION': 'false',
+      },
+    })
+
+    res.setHeader('Content-Type', 'application/javascript')
+    res.send(result.outputFiles[0].text)
+  } catch (error) {
+    console.error('Error bundling TypeScript:', error)
+    res.status(500).send('Error bundling TypeScript')
+  }
 })
+// In order to not forwarding the accessToken to it, we disable LTI
+// autentication for `/index.js`
+ltijs.whitelist({ route: '/index.js', method: 'get' })
 
 // Endpoint to save content
 ltijs.app.put('/mutate', async (req, res) => {
@@ -79,7 +108,7 @@ ltijs.onConnect((_, __, res) => {
     ltijsKey,
   )
 
-  return ltijs.redirect(res, `/app?accessToken=${accessToken}`)
+  return ltijs.redirect(res, `/index.html?accessToken=${accessToken}`)
 }, {})
 
 // Successful LTI deep linking launch
@@ -95,9 +124,13 @@ ltijs.onDeepLinking((_, __, res) => {
     ltijsKey, // Reuse the symmetric HS256 key used by ltijs to sign ltik and database entries
   )
 
-  return ltijs.redirect(res, `/app?accessToken=${accessToken}?deeplink=true`, {
-    isNewResource: true, // Tell ltijs that this is a new resource so it can update some stuff in the database
-  })
+  return ltijs.redirect(
+    res,
+    `/index.html?accessToken=${accessToken}?deeplink=true`,
+    {
+      isNewResource: true, // Tell ltijs that this is a new resource so it can update some stuff in the database
+    },
+  )
 })
 
 ltijs.app.post('/finish-deeplink', async (req, res) => {
