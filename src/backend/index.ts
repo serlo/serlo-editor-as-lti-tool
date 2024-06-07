@@ -29,7 +29,7 @@ ltijs.setup(
 
 // Compiles `src/frontend/index.tsx` on the fly with esbuild to a bundled
 // JavaScript file.
-ltijs.app.get('/index.js', async (_, res) => {
+ltijs.app.get('/editor.js', async (_, res) => {
   res.setHeader('Content-Type', 'application/javascript')
 
   try {
@@ -58,7 +58,7 @@ ltijs.app.get('/index.js', async (_, res) => {
 })
 // In order to not forwarding the accessToken to it, we disable LTI
 // autentication for `/index.js`
-ltijs.whitelist({ route: '/index.js', method: 'get' })
+ltijs.whitelist({ route: '/editor.js', method: 'get' })
 
 // Endpoint to save content
 ltijs.app.put('/mutate', async (req, res) => {
@@ -108,7 +108,7 @@ ltijs.onConnect((_, __, res) => {
     ltijsKey,
   )
 
-  return ltijs.redirect(res, `/index.html?accessToken=${accessToken}`)
+  return ltijs.redirect(res, `/editor.html?accessToken=${accessToken}`)
 }, {})
 
 // Successful LTI deep linking launch
@@ -126,7 +126,7 @@ ltijs.onDeepLinking((_, __, res) => {
 
   return ltijs.redirect(
     res,
-    `/index.html?accessToken=${accessToken}?deeplink=true`,
+    `/editor.html?accessToken=${accessToken}?deeplink=true`,
     {
       isNewResource: true, // Tell ltijs that this is a new resource so it can update some stuff in the database
     },

@@ -1,7 +1,7 @@
 import { SerloEditor } from '@serlo/editor'
 import { useEffect, useState } from 'react'
 
-function App() {
+function Editor() {
   // TODO: Make editorState always contain valid value
   const [editorState, setEditorState] = useState<string | undefined>(undefined)
   const [savePending, setSavePending] = useState<boolean>(false)
@@ -77,4 +77,4 @@ function App() {
   )
 }
 
-export default App
+export default Editor
