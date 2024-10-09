@@ -1,4 +1,4 @@
-# Shared network 'express-mongo-mysql' makes service 'mongo' & 'mysql' available to service 'express'. You can connect using the service name in MONGODB_CONNECTION_URI like this: mongodb://[SERVICE_NAME]:27017/
+# Shared network 'express-mongo-mysql' makes service 'mongo' & 'mysql' available to service 'express'. You can connect using the service name in MONGODB_URI like this: mongodb://[SERVICE_NAME]:27017/
 
 services:
   express:
@@ -7,8 +7,10 @@ services:
       dockerfile: Dockerfile.dev
     env_file: '.env'
     depends_on:
-      - mongo
-      - mysql
+      mongo:
+        condition: service_started
+      mysql:
+        condition: service_healthy
     networks:
       - express-mongo-mysql
     expose:
@@ -25,6 +27,8 @@ services:
         #     - node_modules/
         - action: rebuild
           path: .
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
   mongo:
     image: mongo:7.0.11
     networks:
@@ -32,11 +36,24 @@ services:
     expose:
       - 27017
   mysql:
-    image: ghcr.io/serlo/serlo-mysql-database:latest
-    platform: linux/x86_64
-    pull_policy: always
-    ports:
-      - '3306:3306'
+    image: mariadb:lts
+    environment:
+      - MARIADB_DATABASE=serlo
+      - MARIADB_USER=root
+      - MARIADB_PASSWORD=secret
+      - MARIADB_ROOT_PASSWORD=secret
+    # https://mariadb.com/kb/en/using-healthcheck-sh/
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    # image: ghcr.io/serlo/serlo-mysql-database:latest
+    # platform: linux/x86_64
+    # pull_policy: always
+    # ports:
+    #   - '3306:3306'
     networks:
       - express-mongo-mysql
 networks:

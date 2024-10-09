@@ -1,5 +1,5 @@
 # .env - Should not be added because it contains private keys used for encryption
-.env
+*.env
 
 # Logs
 logs

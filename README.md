@@ -1,4 +1,4 @@
-Serlo editor as LTI tool Status: Early prototype
+Prototype: Serlo editor as LTI tool
 
 # Local dev setup
 
@@ -6,7 +6,7 @@ Requirements:
 
 - Docker & Docker Compose
 
-1. Create file `.env` and copy content from `.env-template`
+1. Create local `.env` file and paste values from 1password
 2. `yarn` to install dependencies
 3. `yarn dev` to start docker containers (hot reload)
 4. Go to https://saltire.lti.app/platform, sign in, navigate to "Advanced

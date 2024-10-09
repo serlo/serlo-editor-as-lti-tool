@@ -127,12 +127,21 @@ function App() {
       <div
         style={{ padding: '1rem', backgroundColor: 'white', minWidth: '600px' }}
       >
-        <SerloRenderer state={appState.content} editorVariant="lti-tool" />
+        <SerloRenderer
+          state={appState.content}
+          editorVariant="lti-tool"
+          _ltik={ltik as string}
+        />
       </div>
     )
   }
   if (appState.type === 'editor') {
-    return <SerloEditorWrapper initialState={appState.content} />
+    return (
+      <SerloEditorWrapper
+        initialState={appState.content}
+        ltik={ltik as string}
+      />
+    )
   }
 
   return <div>Invalid app state: {appState}</div>
