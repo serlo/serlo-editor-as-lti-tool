@@ -26,7 +26,10 @@
     "wait-for-server": "timeout 120 bash -c 'until curl http://localhost:3000/lti/keys; do sleep 3; done'"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.674.0",
+    "@aws-sdk/s3-request-presigner": "^3.674.0",
     "@dotenvx/dotenvx": "^1.14.2",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@serlo/editor": "0.16.0",
     "express": "^4.19.2",
     "fp-ts": "2.16.9",
