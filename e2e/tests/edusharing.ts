@@ -30,6 +30,25 @@ Scenario(
   }
 )
 
+Scenario(
+  'The editor saves automatically when it is open for long enough after there have been changes made.',
+  ({ I }) => {
+    openSerloEditorWithLTI(I)
+
+    expectEditorOpenedSuccessfully(I)
+
+    I.click('$add-new-plugin-row-button')
+    I.click('Box')
+    I.type('Test title')
+
+    I.wait(5)
+
+    openSerloEditorWithLTI(I)
+
+    I.see('Test title')
+  }
+)
+
 Scenario('Assets from edu-sharing can be included', ({ I }) => {
   openSerloEditorWithLTI(I)
 
@@ -37,7 +56,7 @@ Scenario('Assets from edu-sharing can be included', ({ I }) => {
 
   embedEdusharingAsset(I)
 
-  I.seeElement('img[title="Lars Testbild"]')
+  I.seeElement('img[title="Serlo Testbild"]')
 })
 
 function embedEdusharingAsset(I: CodeceptJS.I) {
