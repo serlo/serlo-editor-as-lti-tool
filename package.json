@@ -30,6 +30,7 @@
     "@serlo/editor": "0.16.0",
     "express": "^4.19.2",
     "fp-ts": "2.16.9",
+    "http-proxy-middleware": "^3.0.3",
     "io-ts": "^2.2.21",
     "jsonwebtoken": "9.0.2",
     "jwt-decode": "4.0.0",

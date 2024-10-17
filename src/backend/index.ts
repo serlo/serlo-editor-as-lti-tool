@@ -4,7 +4,7 @@ import path from 'path'
 import { v4 as uuid_v4 } from 'uuid'
 import * as t from 'io-ts'
 import { readEnvVariable } from './read-env-variable'
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { createAccessToken } from './create-acccess-token'
 import { ltiRegisterPlatformsAndTools } from './lti-platforms-and-tools'
 import urlJoin from 'url-join'
@@ -22,6 +22,7 @@ import {
   editorPutEntity,
 } from './editor-route-handlers'
 import { getMysqlDatabase } from './database'
+import { mediaProxy } from './media-route-handlers'
 
 const ltijsKey = readEnvVariable('LTIJS_KEY')
 const mongodbConnectionUri = readEnvVariable('MONGODB_URI')
@@ -71,38 +72,54 @@ ltijs.whitelist(
   '/edusharing-embed/keys'
 )
 
+// since whitelist is not allowing wildcards we ignore the invalidToken event for selected routes
+// @ts-expect-error types probably outdated
+ltijs.onInvalidToken(
+  async (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/media/')) {
+      next()
+      return
+    }
+    return res.status(401).send(res.locals.err)
+  }
+)
+
+const { app } = ltijs
+
 // Disable COEP
-ltijs.app.use((_, res, next) => {
+app.use((_, res, next) => {
   res.removeHeader('Cross-Origin-Embedder-Policy')
   next()
 })
 
 // Opens Serlo editor
-ltijs.app.get('/app', editorApp)
+app.get('/app', editorApp)
 
 // Endpoint to get content
-ltijs.app.get('/entity', editorGetEntity)
+app.get('/entity', editorGetEntity)
 
 // Endpoint to save content
-ltijs.app.put('/entity', editorPutEntity)
+app.put('/entity', editorPutEntity)
 
 // Provide endpoint to start embed flow on edu-sharing
 // Called when user clicks on "embed content from edusharing"
-ltijs.app.get('/edusharing-embed/start', edusharingStart)
+app.get('/edusharing-embed/start', edusharingStart)
 
 // Receives an Authentication Request in payload
 // See: https://www.imsglobal.org/spec/security/v1p0/#step-2-authentication-request
-ltijs.app.get('/edusharing-embed/login', edusharingLogin)
+app.get('/edusharing-embed/login', edusharingLogin)
 
-ltijs.app.use('/edusharing-embed/keys', edusharingKeys)
+app.use('/edusharing-embed/keys', edusharingKeys)
 
 // Called after the resource selection on Edusharing (within iframe) when user selected what resource to embed.
 // Receives a LTI Deep Linking Response Message in payload. Contains content_items array that specifies which resource should be embedded.
 // See: https://www.imsglobal.org/spec/lti-dl/v2p0#deep-linking-response-message
 // See https://www.imsglobal.org/spec/lti-dl/v2p0#deep-linking-response-example for an example response payload
-ltijs.app.post('/edusharing-embed/done', edusharingDone)
+app.post('/edusharing-embed/done', edusharingDone)
 
-ltijs.app.get('/edusharing-embed/get', edusharingGet)
+app.get('/edusharing-embed/get', edusharingGet)
+
+app.use(mediaProxy)
 
 // Successful LTI resource link launch
 // @ts-expect-error @types/ltijs
