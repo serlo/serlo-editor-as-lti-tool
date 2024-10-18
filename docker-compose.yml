@@ -1,8 +1,6 @@
 services:
   mongo:
     image: mongo:6
-    expose:
-      - 27017
     ports:
       - 27017:27017
   mariadb:
@@ -11,7 +9,5 @@ services:
       - MARIADB_DATABASE=serlo
       - MARIADB_PASSWORD=secret
       - MARIADB_ROOT_PASSWORD=secret
-    expose:
-      - 3306
     ports:
       - 3306:3306

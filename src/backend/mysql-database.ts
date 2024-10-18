@@ -7,16 +7,69 @@ import {
 } from 'mysql2/promise'
 
 import { readEnvVariable } from './read-env-variable'
+import { type Entity } from '.'
 
 const mysqlUri = readEnvVariable('MYSQL_URI')
+const editorUrl = readEnvVariable('EDITOR_URL')
 
-let pool: Pool | null = null
+let database: Database | null = null
 
 export function getMysqlDatabase() {
-  if (pool === null) {
-    pool = createPool(mysqlUri)
+  if (database === null) {
+    database = new Database(createPool(mysqlUri))
   }
-  return new Database(pool)
+  return database
+}
+
+export async function initMysqlDatabase() {
+  const database = getMysqlDatabase()
+
+  // Create table if necessary
+  await database.mutate(
+    `
+    CREATE TABLE IF NOT EXISTS lti_entity (
+      id bigint NOT NULL AUTO_INCREMENT, 
+      resource_link_id varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, 
+      custom_claim_id varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+      edusharing_node_id varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, 
+      content longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL, 
+      id_token_on_creation text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL, 
+      
+      PRIMARY KEY (id), 
+      KEY idx_lti_entity_custom_claim_id (custom_claim_id),
+      KEY idx_lti_entity_edusharing_node_id (edusharing_node_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
+    `
+  )
+
+  const notProductionEnvironment =
+    process.env['ENVIRONMENT'] === 'local' ||
+    editorUrl === 'https://editor.serlo-staging.dev/' ||
+    editorUrl === 'https://editor.serlo.dev/'
+
+  if (notProductionEnvironment) {
+    // Make sure there is an entity with a fixed ID in database to simplify development
+    const entity = await database.fetchOptional<Entity | null>(
+      `
+      SELECT
+        id,
+        resource_link_id,
+        custom_claim_id,
+        content
+      FROM
+        lti_entity
+      WHERE
+        custom_claim_id = ?
+    `,
+      ['00000000-0000-0000-0000-000000000000']
+    )
+    if (!entity) {
+      await database.mutate(
+        'INSERT INTO lti_entity (custom_claim_id, id_token_on_creation) values (?, ?)',
+        ['00000000-0000-0000-0000-000000000000', JSON.stringify({})]
+      )
+    }
+  }
 }
 
 export class Database {
@@ -156,15 +209,26 @@ export class Database {
     sql: string,
     params?: unknown[]
   ): Promise<T> {
-    if (this.state.type === 'OutsideOfTransaction') {
-      const [rows] = await this.pool.execute<T>(sql, params)
+    const numberOfTries = 10
+    const waitTime = 1000
+    for (let i = 0; i < numberOfTries; i++) {
+      try {
+        if (this.state.type === 'OutsideOfTransaction') {
+          const [rows] = await this.pool.execute<T>(sql, params)
 
-      return rows
-    } else {
-      const [rows] = await this.state.transaction.execute<T>(sql, params)
+          return rows
+        } else {
+          const [rows] = await this.state.transaction.execute<T>(sql, params)
 
-      return rows
+          return rows
+        }
+      } catch {
+        await new Promise((res) => setTimeout(res, waitTime))
+      }
     }
+    throw new Error(
+      `Failed to execute command in mysql database after ${numberOfTries} tries.`
+    )
   }
 }
 

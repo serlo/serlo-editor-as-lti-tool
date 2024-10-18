@@ -7,8 +7,9 @@ export const edusharingAsToolConfigs: {
   keysetEndpoint: string
 }[] = []
 
-/** Gets the endpoints and clientId for an edu-sharing instance used as an LTI tool during embed of edu-sharing content
- * Function accepts issWhenEdusharingLaunchedSerloEditor or edusharingClientIdOnSerloEditor because during the LTI flow we have either one or the other available to us.
+/** Gets the endpoints and clientId for an edu-sharing instance used as an LTI tool during embed of edu-sharing content.
+ *
+ * Function accepts `issWhenEdusharingLaunchedSerloEditor` or `edusharingClientIdOnSerloEditor` because during the LTI flow we have either one or the other available to us.
  */
 export function getEdusharingAsToolConfiguration(
   entryToFind:

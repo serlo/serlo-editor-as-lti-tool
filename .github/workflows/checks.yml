@@ -46,12 +46,14 @@ jobs:
       - run: yarn install
       - run: yarn build
       - run: yarn dev:databases -d
+      # Run `yarn start` in background (otherwise it would block)
       - run: |
           nohup yarn start &
           echo $! > app.pid
       - run: yarn playwright install
       - run: yarn wait-for-server
       - run: HEADLESS=true yarn test
+      # End background process
       - run: |
           if [ -f app.pid ]; then
             kill -9 $(cat app.pid) || echo "App already stopped"
