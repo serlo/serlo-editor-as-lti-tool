@@ -11888,7 +11888,6 @@ __metadata:
     tsx: "npm:4.19.1"
     typescript: "npm:^5.6.3"
     typescript-eslint: "npm:^8.8.0"
-    url-join: "npm:4.0.1"
     uuid: "npm:^10.0.0"
     vite: "npm:^5.4.3"
   languageName: unknown
@@ -13195,13 +13194,6 @@ __metadata:
   dependencies:
     punycode: "npm:^2.1.0"
   checksum: 10/b271ca7e3d46b7160222e3afa3e531505161c9a4e097febae9664e4b59912f4cbe94861361a4175edac3a03fee99d91e44b6a58c17a634bc5a664b19fc76fbcb
-  languageName: node
-  linkType: hard
-
-"url-join@npm:4.0.1":
-  version: 4.0.1
-  resolution: "url-join@npm:4.0.1"
-  checksum: 10/b53b256a9a36ed6b0f6768101e78ca97f32d7b935283fd29ce19d0bbfb6f88aa80aa6c03fd87f2f8978ab463a6539f597a63051e7086f3379685319a7495f709
   languageName: node
   linkType: hard
 

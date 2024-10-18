@@ -2,7 +2,6 @@ import { IdToken } from 'ltijs'
 import jwt from 'jsonwebtoken'
 import * as t from 'io-ts'
 import { readEnvVariable } from '../read-env-variable'
-import urlJoin from 'url-join'
 import { createAutoFromResponse } from './create-auto-form-response'
 import { verifyJwt } from './verify-jwt'
 import { createJWKSResponse } from './create-jwks-response'
@@ -180,7 +179,7 @@ export async function edusharingLogin(req: Request, res: Response) {
     nonce,
   })
 
-  const platformDoneEndpoint = new URL(urlJoin(editorUrl, '/done'))
+  const platformDoneEndpoint = new URL('/done', editorUrl)
 
   // Construct a Authentication Response
   // See: https://www.imsglobal.org/spec/security/v1p0/#step-3-authentication-response
@@ -410,10 +409,8 @@ export async function edusharingGet(req: Request, res: Response) {
     privateKey: edusharingEmbedKeys.privateKey,
   })
 
-  const url = new URL(
-    urlJoin(edusharingAsToolConfig.detailsEndpoint, `${repositoryId}/${nodeId}`)
-  )
-
+  const url = new URL(edusharingAsToolConfig.detailsEndpoint)
+  url.pathname = `${repositoryId}/${nodeId}`
   url.searchParams.append('displayMode', 'inline')
   url.searchParams.append('jwt', encodeURIComponent(message))
 

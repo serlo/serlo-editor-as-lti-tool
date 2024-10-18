@@ -7,7 +7,6 @@ import { readEnvVariable } from './read-env-variable'
 import { Request, Response } from 'express'
 import { createAccessToken } from './create-acccess-token'
 import { ltiRegisterPlatformsAndTools } from './lti-platforms-and-tools'
-import urlJoin from 'url-join'
 import {
   edusharingDone,
   edusharingGet,
@@ -294,13 +293,11 @@ ltijs.onDeepLinking(async (idToken, __, res) => {
 
   console.log('entityId: ', entityId)
 
-  const url = new URL(urlJoin(editorUrl, '/lti/launch'))
-
   // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
   const items = [
     {
       type: 'ltiResourceLink',
-      url: url.href,
+      url: new URL('/lti/launch', editorUrl).href,
       title: `Serlo Editor Content`,
       text: 'Placeholder description',
       // icon:

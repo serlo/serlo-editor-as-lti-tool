@@ -5,7 +5,6 @@ import { testContent } from './test-content'
 import { imageEmbedJson } from './mocked-embed-json/image'
 import { v4 as uuid_v4 } from 'uuid'
 import * as jose from 'jose'
-import urlJoin from 'url-join'
 import { readEnvVariable } from '../backend/read-env-variable'
 import { createAutoFromResponse } from '../backend/edusharing/create-auto-form-response'
 import { serverLog } from '../utils/server-log'
@@ -15,6 +14,9 @@ export const editorUrl = readEnvVariable('EDITOR_URL')
 export const edusharingMockClientId = 'edusharing-mock'
 
 const VersionComment = t.union([t.null, t.string, t.array(t.string)])
+
+const ltiLoginUrl = new URL('lti/login', editorUrl).href
+const ltiLaunchUrl = new URL('lti/launch', editorUrl).href
 
 export class EdusharingServer {
   private keys = jose.generateKeyPair('RS256', {
@@ -52,9 +54,9 @@ export class EdusharingServer {
     this.app.get('/', (_req, res) => {
       createAutoFromResponse({
         res,
-        targetUrl: urlJoin(editorUrl, 'lti/login'),
+        targetUrl: ltiLoginUrl,
         params: {
-          target_link_uri: urlJoin(editorUrl, 'lti/launch'),
+          target_link_uri: ltiLaunchUrl,
           iss: 'http://localhost:8100/edu-sharing',
           login_hint: this.loginHint,
           lti_message_hint: uuid_v4(), // TODO: Maybe make this be a fixed value for tests?
@@ -94,10 +96,8 @@ export class EdusharingServer {
           id: this.contextId,
           label: this.custom.user,
         },
-        'https://purl.imsglobal.org/spec/lti/claim/target_link_uri': urlJoin(
-          editorUrl,
-          'lti/launch'
-        ),
+        'https://purl.imsglobal.org/spec/lti/claim/target_link_uri':
+          ltiLaunchUrl,
         'https://purl.imsglobal.org/spec/lti/claim/resource_link': {
           id: '604f62c1-6463-4206-a571-8c57097a54ae',
           title: 'Test Content',
@@ -121,7 +121,7 @@ export class EdusharingServer {
       createAutoFromResponse({
         res,
         method: 'POST',
-        targetUrl: urlJoin(editorUrl, 'lti/launch'),
+        targetUrl: ltiLaunchUrl,
         params: {
           id_token: idToken,
           state: state.toString(),
@@ -206,7 +206,7 @@ export class EdusharingServer {
         createAutoFromResponse({
           res,
           method: 'GET',
-          targetUrl: urlJoin(editorUrl, 'edusharing-embed/login'),
+          targetUrl: new URL('edusharing-embed/login', editorUrl).href,
           params: {
             scope: 'openid',
             response_type: 'id_token',
@@ -241,7 +241,7 @@ export class EdusharingServer {
       }
 
       const serloEditorJwks = jose.createRemoteJWKSet(
-        new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
+        new URL('edusharing-embed/keys', editorUrl)
       )
 
       const verifyResult = await jose.jwtVerify(
@@ -303,10 +303,8 @@ export class EdusharingServer {
       createAutoFromResponse({
         res,
         method: 'POST',
-        targetUrl: urlJoin(editorUrl, 'edusharing-embed/done'),
-        params: {
-          JWT: jwt,
-        },
+        targetUrl: new URL('edusharing-embed/done', editorUrl).href,
+        params: { JWT: jwt },
       })
     })
 
