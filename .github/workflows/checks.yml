@@ -35,14 +35,12 @@ jobs:
       - uses: ./.github/actions/setup-node
       - run: yarn build
 
-  # TODO: this is just a basic check to see if it is set up and running
-  # change for real tests later
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node
-      - run: cp .env.local.template .env
+      - run: cp .env.template .env
       - run: yarn install
       - run: yarn build
       - run: yarn dev:databases -d

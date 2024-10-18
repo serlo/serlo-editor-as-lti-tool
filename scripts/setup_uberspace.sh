@@ -17,14 +17,18 @@ fi
 # TODO: X-Frame-Options is deprecated anyway. Maybe restrict embedding only on allowed domains using new headers? See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options instead
 uberspace web header suppress / X-Frame-Options
 
-# Generate mongodb password
-if ! $(grep MONGODB_PASSWORD ~/.bashrc); then
-  export MONGODB_PASSWORD=$(pwgen 32 1)
-  echo "export MONGODB_PASSWORD=$MONGODB_PASSWORD" >> ~/.bashrc
+echo 'Configure IONOS S3 Client for Management'
+s3cmd --configure
+
+echo 'Downloading the .env file'
+if ! s3cmd cp s3://edtr-env/${USER}/.env .; then
+  echo 'Error: File not found or download failed!'
+  echo 'Set the .env file in the bucket first'
+  exit 1
 fi
 
 # Pull env into current shell
-source ~/.bashrc
+source .env
 
 # Set up MongoDB
 if ! $(uberspace tools version show mongodb | grep -q '6.0'); then
@@ -44,12 +48,6 @@ cp ./uberspace/mongodb/.mongoshrc.js ~/
 cp ./uberspace/mongodb/setup.js ~/mongodb/
 mongosh admin ~/mongodb/setup.js
 echo 'MongoDB set up successfully'
-
-# Add environment variables to .env
-mysql_pw=$(grep -oP -m 1 "^password=(.*)" ~/.my.cnf | cut -d '=' -f 2-)
-echo "MYSQL_URI=mysql://${USER}:${mysql_pw}@localhost:3306/${USER}" >> .env
-echo "MONGODB_URI=mongodb://${USER}_mongoroot:${MONGODB_PASSWORD}@127.0.0.1:27017/" >> .env
-echo 'Updated environment variables'
 
 # Install dependencies
 yarn
@@ -84,10 +82,7 @@ if [ "$USER" = "edtr" ]; then
   # IMPORTANT: This completely overwrites existing cronjob entries!
   crontab ~/serlo-editor-as-lti-tool/uberspace/backup_cron
   echo 'Added cronjob for database backups'
-  
-  echo 'Configuring IONOS S3 for database backups'
-  s3cmd --configure
-  
+
   echo 'Available buckets:'
   s3cmd ls
   echo 'Create bucket serlo-test-database-backup manually if it does not appear here.'

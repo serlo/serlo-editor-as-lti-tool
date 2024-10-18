@@ -5,15 +5,16 @@ Prototype: Serlo editor as LTI tool
 Requirements:
 
 - Docker 24.0.0 or later
+- Node LTS
 
-1. Create a copy of `.env.local.template` as `.env`
+1. Create a copy of `.env.template` as `.env`
 2. (optional) Add secret values to `.env`
 3. `yarn` to install dependencies
 4. `yarn dev` to start the databases and the express backend & build the
    frontend
 
 Now, the editor is running locally. On code changes the express server will
-restart and the frontend will be rebuild.
+restart and the frontend will be rebuilt.
 
 ## Launch through Saltire
 
@@ -42,3 +43,17 @@ express.
 
 On a successful LTI launch the server returns a signed `accessToken` jwt that
 the client can then later use to authenticate saving content.
+
+# Management of Env Vars of the Deployments
+
+To use CLI to update any environment variable of the development, staging and
+production environments, follow these steps:
+
+1. Ask the admin to include you into the IONOS contract and update to policy of
+   the corresponding bucket. Alternatively, you can use the credentials of the
+   dev or admin user.
+2. Install a s3 client CLI (we recommend `s3cmd`) and configure it accordingly.
+3. Download the file, update it and upload it.
+
+Alternatively, if you have the permissions, you can login into IONOS and manage
+there using the UI.
