@@ -8,16 +8,14 @@ export function createJWKSResponse(args: {
 }) {
   const { res, keyid, publicKey } = args
 
-  res
-    .json({
-      keys: [
-        {
-          kid: keyid,
-          alg: 'RS256',
-          use: 'sig',
-          ...publicKey.export({ format: 'jwk' }),
-        },
-      ],
-    })
-    .end()
+  res.json({
+    keys: [
+      {
+        kid: keyid,
+        alg: 'RS256',
+        use: 'sig',
+        ...publicKey.export({ format: 'jwk' }),
+      },
+    ],
+  })
 }

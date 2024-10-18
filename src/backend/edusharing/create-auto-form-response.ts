@@ -36,5 +36,4 @@ export function createAutoFromResponse({
      </html>
     `.trim()
   )
-  res.end()
 }

@@ -1,6 +1,7 @@
 import { Provider as ltijs } from 'ltijs'
 import { edusharingMockClientId } from '../edusharing-mock/server'
 import { edusharingAsToolConfigs } from './edusharing/get-edusharing-as-tool-configuration'
+import { serverLog } from '../utils/server-log'
 
 export async function ltiRegisterPlatformsAndTools() {
   // Register platform: saltire
@@ -17,7 +18,7 @@ export async function ltiRegisterPlatformsAndTools() {
         key: 'https://saltire.lti.app/platform/jwks/sc24671cd70c6e45554e6c405a2f5d966',
       },
     })
-    console.log(`Registered platform: saltire`)
+    serverLog(`Registered platform: saltire`)
   }
 
   // Register platform: itslearning
@@ -41,7 +42,7 @@ export async function ltiRegisterPlatformsAndTools() {
       },
     })
     if (platform) {
-      console.log('Registered platform: itslearning')
+      serverLog('Registered platform: itslearning')
     }
   }
 
@@ -79,7 +80,7 @@ export async function ltiRegisterPlatformsAndTools() {
         detailsEndpoint: process.env.EDUSHARING_RLP_DETAILS_ENDPOINT,
         keysetEndpoint: process.env.EDUSHARING_RLP_KEYSET_ENDPOINT,
       })
-      console.log('Registered platform: edu-sharing (RLP)')
+      serverLog('Registered platform: edu-sharing (RLP)')
     }
   }
 
@@ -108,7 +109,7 @@ export async function ltiRegisterPlatformsAndTools() {
       keysetEndpoint: 'http://localhost:8100/edu-sharing/rest/lti/v13/jwks',
     })
     if (platform) {
-      console.log(`Registered platform: edusharing-mock`)
+      serverLog(`Registered platform: edusharing-mock`)
     }
   }
 
@@ -130,7 +131,7 @@ export async function ltiRegisterPlatformsAndTools() {
   //     },
   //   })
   //   if (platform) {
-  //     console.log(`Registered platform: edusharing-local-docker`)
+  //     serverLog(`Registered platform: edusharing-local-docker`)
   //   }
   // }
 }

@@ -8,6 +8,7 @@ import * as jose from 'jose'
 import urlJoin from 'url-join'
 import { readEnvVariable } from '../backend/read-env-variable'
 import { createAutoFromResponse } from '../backend/edusharing/create-auto-form-response'
+import { serverLog } from '../utils/server-log'
 
 export const editorUrl = readEnvVariable('EDITOR_URL')
 
@@ -67,7 +68,7 @@ export class EdusharingServer {
     this.app.get('/edu-sharing/rest/ltiplatform/v13/auth', async (req, res) => {
       const state = req.query['state']
       if (!state) {
-        res.sendStatus(400).send('Query parameter state was missing').end()
+        res.sendStatus(400).send('Query parameter state was missing')
         return
       }
 
@@ -130,23 +131,21 @@ export class EdusharingServer {
 
     this.app.get('/edu-sharing/rest/lti/v13/jwks', async (_req, res) => {
       const jwk = await jose.exportJWK((await this.keys).publicKey)
-      res
-        .json({
-          keys: [
-            {
-              kid: this.keyId,
-              alg: 'RS256',
-              use: 'sig',
-              ...jwk,
-            },
-          ],
-        })
-        .end()
+      res.json({
+        keys: [
+          {
+            kid: this.keyId,
+            alg: 'RS256',
+            use: 'sig',
+            ...jwk,
+          },
+        ],
+      })
     })
 
     // Currently unused
     this.app.get('/edu-sharing/rest/ltiplatform/v13/content', (_req, res) => {
-      res.json(this.content).end()
+      res.json(this.content)
     })
 
     const storage = multer.memoryStorage()
@@ -159,14 +158,14 @@ export class EdusharingServer {
       (req, res) => {
         const comment = req.query['versionComment'] ?? null
         if (!req.file) {
-          res.sendStatus(400).send('req.file was missing').end()
+          res.sendStatus(400).send('req.file was missing')
           return
         }
 
         if (VersionComment.is(comment)) {
           this.savedVersions.push({ comment })
           this.content = JSON.parse(req.file.buffer.toString())
-          console.log(
+          serverLog(
             `[${new Date().toISOString()}]: Save registered with comment ${
               req.query['versionComment']
             }`
@@ -184,10 +183,7 @@ export class EdusharingServer {
       '/edu-sharing/rest/lti/v13/oidc/login_initiations',
       (req, res) => {
         if (!req.query['login_hint']) {
-          res
-            .sendStatus(400)
-            .send('Query parameter login_hint was missing')
-            .end()
+          res.sendStatus(400).send('Query parameter login_hint was missing')
           return
         }
 
@@ -240,7 +236,7 @@ export class EdusharingServer {
         return
 
       if (typeof req.body.id_token !== 'string') {
-        res.status(400).send('id_token is undefined').end()
+        res.status(400).send('id_token is undefined')
         return
       }
 
@@ -265,10 +261,7 @@ export class EdusharingServer {
           'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'
         ]
       if (!t.type({ data: t.string }).is(deepLinkingSettingsClaim)) {
-        res
-          .status(400)
-          .send('Missing deep_linking_settings claim in id token')
-          .end()
+        res.status(400).send('Missing deep_linking_settings claim in id token')
         return
       }
 
@@ -318,11 +311,11 @@ export class EdusharingServer {
     })
 
     this.app.get('/edu-sharing/rest/lti/v13/details/*/*', (_req, res) => {
-      res.json(imageEmbedJson).end()
+      res.json(imageEmbedJson)
     })
 
     this.app.all('*', (req, res) => {
-      console.error(`${req.method} call to ${req.url} registered`)
+      serverLog(`${req.method} call to ${req.url} registered`)
       res.sendStatus(404).end()
     })
   }
@@ -358,14 +351,11 @@ function isEditorValueInvalid(args: {
   if (value === targetValue) {
     return false
   } else {
-    res
-      .status(400)
-      .json({
-        error: `Editor send invalid value '${value}' for '${name}'`,
-        context: 'edusharing-mock-server',
-        location: req.route.path,
-      })
-      .end()
+    res.status(400).json({
+      error: `Editor send invalid value '${value}' for '${name}'`,
+      context: 'edusharing-mock-server',
+      location: req.route.path,
+    })
     return true
   }
 }

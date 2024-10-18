@@ -60,10 +60,7 @@ export async function edusharingStart(_: Request, res: Response) {
   })
 
   if (!customType.is(custom) || !custom.dataToken) {
-    res
-      .status(400)
-      .send('dataToken, nodeId or user was missing in custom')
-      .end()
+    res.status(400).send('dataToken, nodeId or user was missing in custom')
     return
   }
 
@@ -80,7 +77,6 @@ export async function edusharingStart(_: Request, res: Response) {
     res
       .status(400)
       .send('Failed to add edusharing session information to mongodb')
-      .end()
     return
   }
 
@@ -93,7 +89,6 @@ export async function edusharingStart(_: Request, res: Response) {
       .send(
         `Could not find endpoints for iss ${issWhenEdusharingLaunchedSerloEditor}`
       )
-      .end()
     return
   }
 
@@ -116,14 +111,14 @@ export async function edusharingStart(_: Request, res: Response) {
 export async function edusharingLogin(req: Request, res: Response) {
   const loginHint = req.query['login_hint']
   if (typeof loginHint !== 'string') {
-    res.status(400).send('login_hint is not valid').end()
+    res.status(400).send('login_hint is not valid')
     return
   }
 
   const edusharingEmbedSessionId = parseObjectId(loginHint)
 
   if (edusharingEmbedSessionId == null) {
-    res.status(400).send('login_hint is not valid').end()
+    res.status(400).send('login_hint is not valid')
     return
   }
 
@@ -131,7 +126,7 @@ export async function edusharingLogin(req: Request, res: Response) {
     _id: edusharingEmbedSessionId,
   })
   if (!findResult) {
-    res.status(400).send('could not find edusharingEmbedSession').end()
+    res.status(400).send('could not find edusharingEmbedSession')
     return
   }
 
@@ -147,7 +142,7 @@ export async function edusharingLogin(req: Request, res: Response) {
       })
       .is(edusharingEmbedSession)
   ) {
-    res.status(400).send('login_hint is invalid or session is expired').end()
+    res.status(400).send('login_hint is invalid or session is expired')
     return
   }
 
@@ -157,7 +152,7 @@ export async function edusharingLogin(req: Request, res: Response) {
     issWhenEdusharingLaunchedSerloEditor: iss,
   })
   if (!edusharingAsToolConfig) {
-    res.status(400).send(`Could not find endpoints for LTI tool ${iss}`).end()
+    res.status(400).send(`Could not find endpoints for LTI tool ${iss}`)
     return
   }
 
@@ -165,18 +160,18 @@ export async function edusharingLogin(req: Request, res: Response) {
   const state = req.query['state']
 
   if (typeof nonce !== 'string') {
-    res.status(400).send('nonce is not valid').end()
+    res.status(400).send('nonce is not valid')
     return
   } else if (typeof state !== 'string') {
-    res.status(400).send('state is not valid').end()
+    res.status(400).send('state is not valid')
     return
   } else if (
     req.query['redirect_uri'] !== edusharingAsToolConfig.launchEndpoint
   ) {
-    res.status(400).send('redirect_uri is not valid').end()
+    res.status(400).send('redirect_uri is not valid')
     return
   } else if (req.query['client_id'] !== edusharingAsToolConfig.clientId) {
-    res.status(400).send('client_id is not valid').end()
+    res.status(400).send('client_id is not valid')
     return
   }
 
@@ -248,19 +243,19 @@ export async function edusharingDone(req: Request, res: Response) {
     res
       .status(400)
       .send('"content-type" is not "application/x-www-form-urlencoded"')
-      .end()
+
     return
   }
 
   if (typeof req.body.JWT !== 'string') {
-    res.status(400).send('JWT token is missing in the request').end()
+    res.status(400).send('JWT token is missing in the request')
     return
   }
 
   const decodedJwt = jwt.decode(req.body.JWT)
 
   if (!t.type({ iss: t.string }).is(decodedJwt)) {
-    res.status(400).send('Failed to decode jwt').end()
+    res.status(400).send('Failed to decode jwt')
     return
   }
 
@@ -275,7 +270,7 @@ export async function edusharingDone(req: Request, res: Response) {
       .send(
         `Could not find endpoints for LTI tool ${edusharingClientIdOnSerloEditor}`
       )
-      .end()
+
     return
   }
   const verifyResult = await verifyJwt({
@@ -296,14 +291,14 @@ export async function edusharingDone(req: Request, res: Response) {
   const data = decoded['https://purl.imsglobal.org/spec/lti-dl/claim/data']
 
   if (typeof data !== 'string') {
-    res.status(400).send('data claim in JWT is missing').end()
+    res.status(400).send('data claim in JWT is missing')
     return
   }
 
   const nonceId = parseObjectId(data)
 
   if (nonceId == null) {
-    res.status(400).send('data claim in JWT is invalid').end()
+    res.status(400).send('data claim in JWT is invalid')
     return
   }
 
@@ -311,19 +306,19 @@ export async function edusharingDone(req: Request, res: Response) {
     _id: nonceId,
   })
   if (!findResult.ok) {
-    res.status(400).send('No entry found in deeplinkNonces').end()
+    res.status(400).send('No entry found in deeplinkNonces')
     return
   }
 
   const deeplinkNonce = findResult.value
 
   if (!t.type({ nonce: t.string }).is(deeplinkNonce)) {
-    res.status(400).send('deeplink flow session expired').end()
+    res.status(400).send('deeplink flow session expired')
     return
   }
 
   if (decoded.nonce !== deeplinkNonce.nonce) {
-    res.status(400).send('nonce is invalid').end()
+    res.status(400).send('nonce is invalid')
     return
   }
 
@@ -338,7 +333,7 @@ export async function edusharingDone(req: Request, res: Response) {
     ),
   })
   if (!expectedJwtType.is(decoded)) {
-    res.status(400).send('malformed custom claim in JWT send').end()
+    res.status(400).send('malformed custom claim in JWT send')
     return
   }
 
@@ -346,10 +341,8 @@ export async function edusharingDone(req: Request, res: Response) {
     decoded['https://purl.imsglobal.org/spec/lti-dl/claim/content_items'][0]
       .custom
 
-  res
-    .setHeader('Content-type', 'text/html')
-    .send(
-      `<!DOCTYPE html>
+  res.setHeader('Content-type', 'text/html').send(
+    `<!DOCTYPE html>
             <html>
               <body>
                 <script type="text/javascript">
@@ -361,8 +354,7 @@ export async function edusharingDone(req: Request, res: Response) {
               </body>
             </html>
           `
-    )
-    .end()
+  )
 }
 export async function edusharingGet(req: Request, res: Response) {
   const idToken = res.locals.token
