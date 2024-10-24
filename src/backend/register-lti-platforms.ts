@@ -2,10 +2,11 @@ import { Provider as ltijs } from 'ltijs'
 import { edusharingMockClientId } from '../edusharing-mock/server'
 import { edusharingAsToolConfigs } from './edusharing/get-edusharing-as-tool-configuration'
 import { serverLog } from '../utils/server-log'
+import config from '../utils/config'
 
 export async function registerLtiPlatforms() {
   // Register platform: saltire
-  if (process.env.ALLOW_SALTIRE === 'true') {
+  if (config.ALLOW_SALTIRE) {
     await ltijs.registerPlatform({
       url: 'https://saltire.lti.app/platform', // LTI iss
       name: 'saltire.lti.app',
@@ -85,7 +86,7 @@ export async function registerLtiPlatforms() {
   }
 
   // Register platform: edusharing mock
-  if (process.env.ALLOW_EDUSHARING_MOCK) {
+  if (config.ALLOW_EDUSHARING_MOCK) {
     const platform = await ltijs.registerPlatform({
       url: 'http://localhost:8100/edu-sharing', // LTI iss
       name: 'edusharing-mock',
@@ -114,7 +115,7 @@ export async function registerLtiPlatforms() {
   }
 
   // Register platform: edusharing (local docker)
-  // if (process.env.ALLOW_LOCAL_EDUSHARING) {
+  // if (config.ALLOW_LOCAL_EDUSHARING) {
   //   const platform = await ltijs.registerPlatform({
   //     url: 'http://localhost:8100/edu-sharing', // LTI iss
   //     name: 'Platform', // TODO: Change

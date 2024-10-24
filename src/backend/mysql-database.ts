@@ -6,17 +6,16 @@ import {
   createPool,
 } from 'mysql2/promise'
 
-import { readEnvVariable } from './read-env-variable'
 import { type Entity } from '.'
+import config from '../utils/config'
 
-const mysqlUri = readEnvVariable('MYSQL_URI')
-const editorUrl = readEnvVariable('EDITOR_URL')
+const editorUrl = config.EDITOR_URL
 
 let database: Database | null = null
 
 export function getMysqlDatabase() {
   if (database === null) {
-    database = new Database(createPool(mysqlUri))
+    database = new Database(createPool(config.MYSQL_URI))
   }
   return database
 }
@@ -43,7 +42,7 @@ export async function initMysqlDatabase() {
   )
 
   const notProductionEnvironment =
-    process.env['ENVIRONMENT'] === 'local' ||
+    config.ENVIRONMENT === 'local' ||
     editorUrl === 'https://editor.serlo-staging.dev/' ||
     editorUrl === 'https://editor.serlo.dev/'
 

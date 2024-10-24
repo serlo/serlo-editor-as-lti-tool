@@ -2,11 +2,11 @@ import { Request, Response } from 'express'
 
 import jwt from 'jsonwebtoken'
 import path from 'path'
-import { readEnvVariable } from './read-env-variable'
 import { AccessToken, Entity } from '.'
 import { getMysqlDatabase } from './mysql-database'
+import config from '../utils/config'
 
-const ltijsKey = readEnvVariable('LTIJS_KEY')
+const ltijsKey = config.LTIJS_KEY
 
 export async function editorApp(_: Request, res: Response) {
   return res.sendFile(path.join(__dirname, '../../dist/frontend/index.html'))

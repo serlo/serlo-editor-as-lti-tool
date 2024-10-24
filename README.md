@@ -1,4 +1,4 @@
-Prototype: Serlo editor as LTI tool
+Serlo editor as LTI tool
 
 # Local dev setup
 
@@ -43,6 +43,11 @@ express.
 
 On a successful LTI launch the server returns a signed `accessToken` jwt that
 the client can then later use to authenticate saving content.
+
+# Type Checking of Environment Variables
+
+If you need to add a new mandatory environment variable in the `.env` file, add
+a type checking at `src/utils/config.ts`.
 
 # Management of .env files of deployment environments
 

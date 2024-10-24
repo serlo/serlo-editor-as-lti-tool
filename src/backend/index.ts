@@ -3,11 +3,11 @@ import path from 'path'
 
 import { v4 as uuid_v4 } from 'uuid'
 import * as t from 'io-ts'
-import { readEnvVariable } from './read-env-variable'
 import { NextFunction, Request, Response } from 'express'
 import { createAccessToken } from './create-acccess-token'
 import { registerLtiPlatforms } from './register-lti-platforms'
 import urlJoin from 'url-join'
+import config from '../utils/config'
 import {
   edusharingDone,
   edusharingGet,
@@ -24,9 +24,7 @@ import {
 import { getMysqlDatabase, initMysqlDatabase } from './mysql-database'
 import { mediaPresignedUrl, mediaProxy } from './media-route-handlers'
 
-const ltijsKey = readEnvVariable('LTIJS_KEY')
-const mongodbConnectionUri = readEnvVariable('MONGODB_URI')
-const editorUrl = readEnvVariable('EDITOR_URL')
+const ltijsKey = config.LTIJS_KEY
 
 export interface AccessToken {
   entityId: string
@@ -46,7 +44,7 @@ const setup = async () => {
   ltijs.setup(
     ltijsKey,
     {
-      url: mongodbConnectionUri,
+      url: config.MONGODB_URI,
       // @ts-expect-error @types/ltijs
       connection: {
         useNewUrlParser: true,
@@ -59,8 +57,8 @@ const setup = async () => {
       dynRegRoute: '/lti/register',
       staticPath: path.join(__dirname, './../../dist/frontend'), // Path to static files
       cookies: {
-        secure: process.env['ENVIRONMENT'] === 'local' ? false : true, // Set secure to true if the testing platform is in a different domain and https is being used
-        sameSite: process.env['ENVIRONMENT'] === 'local' ? '' : 'None', // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
+        secure: config.ENVIRONMENT === 'local' ? false : true, // Set secure to true if the testing platform is in a different domain and https is being used
+        sameSite: config.ENVIRONMENT === 'local' ? '' : 'None', // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
       },
     }
   )
@@ -214,10 +212,7 @@ const setup = async () => {
     searchParams.append('accessToken', accessToken)
     searchParams.append('resourceLinkId', resourceLinkId)
     searchParams.append('ltik', res.locals.ltik)
-    searchParams.append(
-      'testingSecret',
-      process.env.SERLO_EDITOR_TESTING_SECRET ?? ''
-    )
+    searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
 
     return ltijs.redirect(res, `/app?${searchParams}`)
   }
@@ -302,10 +297,7 @@ const setup = async () => {
     const searchParams = new URLSearchParams()
     searchParams.append('accessToken', accessToken)
     searchParams.append('resourceLinkId', resourceLinkId)
-    searchParams.append(
-      'testingSecret',
-      process.env.SERLO_EDITOR_TESTING_SECRET ?? ''
-    )
+    searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
 
     return ltijs.redirect(res, `/app?${searchParams}`)
   }
@@ -325,7 +317,7 @@ const setup = async () => {
 
     console.log('entityId: ', entityId)
 
-    const url = new URL(urlJoin(editorUrl, '/lti/launch'))
+    const url = new URL(urlJoin(config.EDITOR_URL, '/lti/launch'))
 
     // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
     const items = [
