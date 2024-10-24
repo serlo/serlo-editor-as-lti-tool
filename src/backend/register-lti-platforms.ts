@@ -23,63 +23,52 @@ export async function registerLtiPlatforms() {
   }
 
   // Register platform: itslearning
-  if (
-    process.env.ITSLEARNING_URL &&
-    process.env.ITSLEARNING_NAME &&
-    process.env.SERLO_EDITOR_CLIENT_ID_ON_ITSLEARNING &&
-    process.env.ITSLEARNING_AUTHENTICATION_ENDPOINT &&
-    process.env.ITSLEARNING_ACCESS_TOKEN_ENDPOINT &&
-    process.env.ITSLEARNING_KEYSET_ENDPOINT
-  ) {
-    const platform = await ltijs.registerPlatform({
-      url: process.env.ITSLEARNING_URL, // LTI iss
-      name: process.env.ITSLEARNING_NAME,
-      clientId: process.env.SERLO_EDITOR_CLIENT_ID_ON_ITSLEARNING,
-      authenticationEndpoint: process.env.ITSLEARNING_AUTHENTICATION_ENDPOINT,
-      accesstokenEndpoint: process.env.ITSLEARNING_ACCESS_TOKEN_ENDPOINT,
+  if (config.ENVIRONMENT === 'staging') {
+    const { ITSLEARNING_URL } = config
+    const itsLearningPlatform = await ltijs.registerPlatform({
+      url: ITSLEARNING_URL, // LTI iss
+      name: 'itslearning.com',
+      clientId: config.SERLO_EDITOR_CLIENT_ID_ON_ITSLEARNING,
+      authenticationEndpoint: ITSLEARNING_URL + '/connect/authorize',
+      accesstokenEndpoint: ITSLEARNING_URL + '/connect/token',
       authConfig: {
         method: 'JWK_SET',
-        key: process.env.ITSLEARNING_KEYSET_ENDPOINT,
+        key: ITSLEARNING_URL + '/.well-known/openid-configuration/jwks',
       },
     })
-    if (platform) {
+    if (itsLearningPlatform) {
       serverLog('Registered platform: itslearning')
     }
-  }
 
-  // Register platform: edu-sharing (RLP)
-  if (
-    process.env.EDUSHARING_RLP_URL &&
-    process.env.EDUSHARING_RLP_NAME &&
-    process.env.SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP &&
-    process.env.EDUSHARING_RLP_AUTHENTICATION_ENDPOINT &&
-    process.env.EDUSHARING_RLP_ACCESS_TOKEN_ENDPOINT &&
-    process.env.EDUSHARING_RLP_KEYSET_ENDPOINT &&
-    process.env.EDUSHARING_RLP_LOGIN_ENDPOINT &&
-    process.env.EDUSHARING_RLP_LAUNCH_ENDPOINT &&
-    process.env.EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR &&
-    process.env.EDUSHARING_RLP_DETAILS_ENDPOINT
-  ) {
-    const platform = await ltijs.registerPlatform({
-      url: process.env.EDUSHARING_RLP_URL, // LTI iss
-      name: process.env.EDUSHARING_RLP_NAME,
-      clientId: process.env.SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP,
+    // Register platform: edu-sharing (RLP)
+    const { EDUSHARING_RLP_URL } = config
+    const edusharingRlpUrlWithPrefixes =
+      EDUSHARING_RLP_URL + '/edu-sharing/rest'
+    const edusharingRlpKeySetUrl =
+      edusharingRlpUrlWithPrefixes + '/lti/v13/jwks'
+
+    const eduSharingPlatform = await ltijs.registerPlatform({
+      url: EDUSHARING_RLP_URL, // LTI iss
+      name: EDUSHARING_RLP_URL,
+      clientId: config.SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP,
       authenticationEndpoint:
-        process.env.EDUSHARING_RLP_AUTHENTICATION_ENDPOINT,
-      accesstokenEndpoint: process.env.EDUSHARING_RLP_ACCESS_TOKEN_ENDPOINT,
+        edusharingRlpUrlWithPrefixes + '/ltiplatform/v13/auth',
+      accesstokenEndpoint:
+        edusharingRlpUrlWithPrefixes + '/ltiplatform/v13/token',
       authConfig: {
         method: 'JWK_SET',
-        key: process.env.EDUSHARING_RLP_KEYSET_ENDPOINT,
+        key: edusharingRlpKeySetUrl,
       },
     })
-    if (platform) {
+    if (eduSharingPlatform) {
       edusharingAsToolConfigs.push({
-        issWhenEdusharingLaunchedSerloEditor: process.env.EDUSHARING_RLP_URL,
-        loginEndpoint: process.env.EDUSHARING_RLP_LOGIN_ENDPOINT,
-        launchEndpoint: process.env.EDUSHARING_RLP_LAUNCH_ENDPOINT,
-        clientId: process.env.EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR,
-        detailsEndpoint: process.env.EDUSHARING_RLP_DETAILS_ENDPOINT,
-        keysetEndpoint: process.env.EDUSHARING_RLP_KEYSET_ENDPOINT,
+        issWhenEdusharingLaunchedSerloEditor: EDUSHARING_RLP_URL,
+        loginEndpoint:
+          edusharingRlpUrlWithPrefixes + '/lti/v13/oidc/login_initiations',
+        launchEndpoint: edusharingRlpUrlWithPrefixes + '/lti/v13/lti13',
+        clientId: config.EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR,
+        detailsEndpoint: edusharingRlpUrlWithPrefixes + '/lti/v13/detail',
+        keysetEndpoint: edusharingRlpKeySetUrl,
       })
       serverLog('Registered platform: edu-sharing (RLP)')
     }

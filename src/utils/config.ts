@@ -29,7 +29,7 @@ const NonEmptyString = new t.Type<string, string, unknown>(
   String
 )
 
-const IOEnv = t.type({
+const BaseEnv = t.type({
   ENVIRONMENT: t.union([
     t.literal('local'),
     t.literal('development'),
@@ -53,7 +53,28 @@ const IOEnv = t.type({
   MEDIA_BASE_URL: NonEmptyString,
 })
 
-const decodedConfig = IOEnv.decode(process.env)
+const StagingSpecificEnv = t.type({
+  ITSLEARNING_URL: NonEmptyString,
+  SERLO_EDITOR_CLIENT_ID_ON_ITSLEARNING: NonEmptyString,
+  EDUSHARING_RLP_URL: NonEmptyString,
+  SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP: NonEmptyString,
+  EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR: NonEmptyString,
+})
+
+const IOEnv = t.union([
+  t.intersection([BaseEnv, t.type({ ENVIRONMENT: t.literal('local') })]),
+  t.intersection([BaseEnv, t.type({ ENVIRONMENT: t.literal('development') })]),
+  t.intersection([
+    BaseEnv,
+    t.type({ ENVIRONMENT: t.literal('staging') }),
+    StagingSpecificEnv,
+  ]),
+  t.intersection([BaseEnv, t.type({ ENVIRONMENT: t.literal('production') })]),
+])
+
+export const decodedConfig = IOEnv.decode(process.env)
+
+export type ConfigType = t.TypeOf<typeof IOEnv>
 
 if (decodedConfig._tag === 'Left') {
   throw new Error(
