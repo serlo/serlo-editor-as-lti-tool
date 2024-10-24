@@ -17,6 +17,9 @@ export const config: CodeceptJS.MainConfig = {
     EdusharingHelper: {
       require: './helpers/edusharing-helper.ts',
     },
+    ItslearningHelper: {
+      require: './helpers/itslearning-helper.ts',
+    },
   },
   plugins: {
     customLocator: {
@@ -25,9 +28,6 @@ export const config: CodeceptJS.MainConfig = {
       // `I.click({ css: '[data-qa=register_button]'})` becomes `I.click('$register_button')`
       attribute: 'data-qa',
     },
-  },
-  include: {
-    I: './steps_file',
   },
   name: 'serlo-editor-as-lti-tool',
 }

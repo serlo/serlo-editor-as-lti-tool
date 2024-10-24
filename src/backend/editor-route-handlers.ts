@@ -20,7 +20,13 @@ export async function editorGetEntity(req: Request, res: Response) {
     return res.send('Missing or invalid access token')
   }
 
-  const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
+  let decodedAccessToken
+  try {
+    decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
+  } catch (error) {
+    console.error(error)
+    return res.json({ content: 'Invalid access token' })
+  }
 
   // Get json from database with decodedAccessToken.entityId
   const entity = await database.fetchOptional<Entity | null>(

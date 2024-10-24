@@ -61,6 +61,14 @@ function App() {
 
     fetchEntity(accessToken, ltik)
       .then((entity) => {
+        if (entity.content === 'Invalid access token') {
+          setAppState({
+            type: 'error',
+            message: 'Fehler: Bitte öffne den Inhalt erneut.',
+          })
+          return
+        }
+
         const resourceLinkIdFromDb = entity.resource_link_id
         if (!resourceLinkIdFromDb || !resourceLinkIdFromUrl) {
           setAppState({

@@ -13,6 +13,7 @@
     "dev:databases": "docker compose up --detach --build",
     "dev:backend": "dotenvx run -- tsx --watch src/backend/index.ts",
     "dev-edusharing": "dotenvx run -- tsx --watch src/edusharing-mock/start-server.ts",
+    "dev-itslearning": "dotenvx run -- tsx --watch src/itslearning-mock/start-server.ts",
     "format": "npm-run-all --sequential --continue-on-error \"format:*\"",
     "format:eslint": "eslint --fix",
     "format:prettier": "prettier . --write",

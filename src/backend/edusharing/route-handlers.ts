@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import * as t from 'io-ts'
 import { readEnvVariable } from '../read-env-variable'
 import urlJoin from 'url-join'
-import { createAutoFromResponse } from './create-auto-form-response'
+import { createAutoFormResponse } from '../util/create-auto-form-response'
 import { verifyJwt } from './verify-jwt'
 import { createJWKSResponse } from './create-jwks-response'
 import { signJwtWithBase64Key } from './sign-jwt'
@@ -94,7 +94,7 @@ export async function edusharingStart(_: Request, res: Response) {
 
   // Create a Third-party Initiated Login request
   // See: https://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
-  createAutoFromResponse({
+  createAutoFormResponse({
     res,
     method: 'GET',
     targetUrl: edusharingAsToolConfiguration.loginEndpoint,
@@ -224,7 +224,7 @@ export async function edusharingLogin(req: Request, res: Response) {
     privateKey: edusharingEmbedKeys.privateKey,
   })
 
-  createAutoFromResponse({
+  createAutoFormResponse({
     res,
     method: 'POST',
     targetUrl: edusharingAsToolConfig.launchEndpoint,

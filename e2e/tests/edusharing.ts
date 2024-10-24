@@ -1,3 +1,8 @@
+import {
+  expireAccessToken,
+  modifyAccessTokenEntityId,
+} from '../utils/access-token'
+
 Feature('Edusharing integration')
 
 Scenario('The editor can be called via the LTI Workflow', ({ I }) => {
@@ -30,6 +35,54 @@ Scenario(
   }
 )
 
+Scenario(
+  'The editor saves automatically when it is open for long enough after there have been changes made.',
+  ({ I }) => {
+    openSerloEditorWithLTI(I)
+
+    expectEditorOpenedSuccessfully(I)
+
+    I.click('$add-new-plugin-row-button')
+    I.click('Box')
+    I.type('Test title')
+
+    I.wait(5)
+
+    openSerloEditorWithLTI(I)
+
+    I.see('Test title')
+  }
+)
+
+Scenario(
+  "Can't save using an `accessToken` token with invalid `entityId`",
+  async ({ I }) => {
+    openSerloEditorWithLTI(I)
+
+    const urlString = await I.grabCurrentUrl()
+    const url = new URL(urlString)
+    const modifiedAccessToken = modifyAccessTokenEntityId(url)
+    url.searchParams.set('accessToken', modifiedAccessToken)
+
+    I.amOnPage(url.toString())
+
+    I.see('Fehler: Bitte öffne den Inhalt erneut.')
+  }
+)
+
+Scenario("Can't save using an expired `accessToken`", async ({ I }) => {
+  openSerloEditorWithLTI(I)
+
+  const urlString = await I.grabCurrentUrl()
+  const url = new URL(urlString)
+  const expiredAccessToken = expireAccessToken(url)
+  url.searchParams.set('accessToken', expiredAccessToken)
+
+  I.amOnPage(url.toString())
+
+  I.see('Fehler: Bitte öffne den Inhalt erneut.')
+})
+
 Scenario('Assets from edu-sharing can be included', ({ I }) => {
   openSerloEditorWithLTI(I)
 
@@ -37,7 +90,7 @@ Scenario('Assets from edu-sharing can be included', ({ I }) => {
 
   embedEdusharingAsset(I)
 
-  I.seeElement('img[title="Lars Testbild"]')
+  I.seeElement('img[title="Serlo Testbild"]')
 })
 
 function embedEdusharingAsset(I: CodeceptJS.I) {
