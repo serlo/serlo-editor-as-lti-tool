@@ -112,7 +112,7 @@ Iframes provide security to the host page but can limit access to required
 functionality (especially for cross-origin embedding). Please use the following
 settings in iframe attributes `sandbox` and `allow`.
 
-## Sandbox
+## sandbox
 
 If you have/want attribute `sandbox` use:
 
@@ -134,14 +134,15 @@ If you have/want attribute `sandbox` use:
 ></iframe>
 ```
 
-If you don't have/want attribute `sandbox` it can also be missing. But never
+If you don't have/want attribute `sandbox` it can also be missing. But never an
+empty string.
 
 ```html
 <!-- Do not use -->
 <iframe sandbox="" src="..."></iframe>
 ```
 
-## Sandbox
+## allow
 
 If you have/want attribute `allow` use
 
@@ -161,6 +162,7 @@ If you have/want attribute `allow` use
 or
 
 ```html
+<!-- Allows all origins access -->
 <iframe
   ...
   allow="
@@ -173,7 +175,8 @@ or
 ></iframe>
 ```
 
-If you don't have/want attribute `allow` it can also be missing. But never
+If you don't have/want attribute `allow` it can also be missing. But never an
+empty string.
 
 ```html
 <!-- Do not use -->
