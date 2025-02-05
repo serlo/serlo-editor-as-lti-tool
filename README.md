@@ -108,22 +108,74 @@ $ git push
 
 # Embed Serlo editor in iframe
 
-Iframes can limit access to required functionality (especially for cross-origin
-embedding). Make sure the iframe embedding the Serlo editor allows access to the
-clipboard & allows full screen. Also, if the `sandbox` attribute is present make
-sure to allow `allow-forms`, `allow-modals`, `allow-popups`, `allow-scripts` and
-maybe some more.
+Iframes provide security to the host page but can limit access to required
+functionality (especially for cross-origin embedding). Please use the following
+settings in iframe attributes `sandbox` and `allow`.
+
+## Sandbox
+
+If you have/want attribute `sandbox` use:
 
 ```html
-<!-- Allow for all origins (can be unsave) -->
-<iframe allow="clipboard-read *; clipboard-write *; fullscreen *"></iframe>
-
-<!-- Allow for only https://editor.serlo.org and https://editor.serlo-staging.dev -->
 <iframe
-  allow="
-   clipboard-read https://editor.serlo.org https://editor.serlo-staging.dev;
-   clipboard-write https://editor.serlo.org https://editor.serlo-staging.dev;
-   fullscreen https://editor.serlo.org https://editor.serlo-staging.dev
+  sandbox="
+    allow-downloads
+    allow-forms
+    allow-modals
+    allow-popups
+    allow-popups-to-escape-sandbox
+    allow-presentation
+    allow-same-origin
+    allow-scripts
+    allow-storage-access-by-user-activation
   "
+  src="..."
+  ...
 ></iframe>
+```
+
+If you don't have/want attribute `sandbox` it can also be missing. But never
+
+```html
+<!-- Do not use -->
+<iframe sandbox="" src="..."></iframe>
+```
+
+## Sandbox
+
+If you have/want attribute `allow` use
+
+```html
+<iframe
+  allow=" 
+    clipboard-read https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev; 
+    clipboard-write https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev; 
+    fullscreen https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev; 
+    autoplay https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev 
+  "
+  src="..."
+  ...
+></iframe>
+```
+
+or
+
+```html
+<iframe
+  ...
+  allow="
+   clipboard-read *;
+   clipboard-write *;
+   fullscreen *;
+   autoplay *
+  "
+  src="..."
+></iframe>
+```
+
+If you don't have/want attribute `allow` it can also be missing. But never
+
+```html
+<!-- Do not use -->
+<iframe allow="" src="..."></iframe>
 ```
