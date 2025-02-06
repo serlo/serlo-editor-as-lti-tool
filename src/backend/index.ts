@@ -140,7 +140,16 @@ const setup = async () => {
 
   // Successful LTI deep linking launch
   // @ts-expect-error @types/ltijs
-  ltijs.onDeepLinking(editor.selectContentType)
+  ltijs.onDeepLinking(async (idToken, req, res) => {
+    const isMoodle = idToken.iss.includes('moodle')
+
+    // On Moodle the UX improves if we show a selection to the user. Even though there is only one option. Everywhere else we directly return without showing the selection.
+    if (isMoodle) {
+      await editor.selectContentType(idToken, req, res)
+    } else {
+      await editor.deeplinkingDone(req, res)
+    }
+  })
 
   await ltijs.deploy()
 
