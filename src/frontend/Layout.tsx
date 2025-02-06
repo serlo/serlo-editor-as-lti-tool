@@ -1,9 +1,10 @@
 import Header from './Header'
 import { isInIframe } from './utils/is-in-iframe'
+import { isLocalOrDev } from './utils/is-local-or-dev'
 
 // Centered & max-width content layout
 export function Layout({ children }: { children: React.ReactNode }) {
-  const showHeader = !isInIframe
+  const showHeader = !isInIframe && isLocalOrDev
 
   return (
     <>
