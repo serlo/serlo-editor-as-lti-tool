@@ -6,11 +6,15 @@ import { AccessToken, Entity } from '.'
 import { getMariaDB } from './mariadb'
 import config from '../utils/config'
 import { logger } from '../utils/logger'
-import { IdToken } from 'ltijs'
 import urljoin from 'url-join'
 import { v4 as uuid_v4 } from 'uuid'
 
 import { Provider as ltijs } from 'ltijs'
+import { IdToken } from './types/idtoken'
+import { LtiCustomClaim } from './types/lti-custom-claim'
+import { errorMessageToUser } from './error-message-to-user'
+import * as t from 'io-ts'
+import { createAccessToken } from './util/create-acccess-token'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -53,19 +57,16 @@ export async function deeplinkingDone(req: Request, res: Response) {
 
   if (!idToken) return res.status(400).send('Missing idToken')
 
-  const mariaDB = getMariaDB()
-
   const ltiCustomClaimId = uuid_v4()
 
-  // Create new entity in database
-  const { insertId: entityId } = await mariaDB.mutate(
-    'INSERT INTO lti_entity (custom_claim_id, id_token_on_creation) values (?, ?)',
-    [ltiCustomClaimId, JSON.stringify(idToken)]
-  )
-
-  logger.info('entityId: ', entityId)
-
   const url = new URL(urljoin(config.EDITOR_URL, '/lti/launch'))
+
+  const custom: LtiCustomClaim = {
+    // Important: Only use lowercase letters in key. When I used uppercase letters they were changed to lowercase letters in the LTI Resource Link launch on itslearning.
+    id: ltiCustomClaimId,
+    type: req.query['type']?.toString(),
+    deeplinkingidtoken: JSON.stringify(idToken),
+  }
 
   // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
   const items = [
@@ -85,11 +86,7 @@ export async function deeplinkingDone(req: Request, res: Response) {
       //   width: 400,
       //   height: 300,
       // },
-      custom: {
-        // Important: Only use lowercase letters in key. When I used uppercase letters they were changed to lowercase letters in the LTI Resource Link launch.
-        id: ltiCustomClaimId,
-        type: req.query['type'],
-      },
+      custom,
       // lineItem:
       // available:
       // submission:
@@ -105,6 +102,126 @@ export async function deeplinkingDone(req: Request, res: Response) {
   const form = await ltijs.DeepLinking.createDeepLinkingForm(idToken, items, {})
 
   return res.send(form)
+}
+
+export async function onConnect(idToken: IdToken, _: Request, res: Response) {
+  // Unique id for a serlo editor resource link on the platform
+  const resourceLinkId = idToken.platformContext?.resource?.id
+  if (!resourceLinkId) {
+    res.status(400).send(errorMessageToUser('resource link id missing'))
+    return
+  }
+
+  // The platform id
+  const iss = idToken.iss
+  const isEdusharing = iss.includes('edu-sharing')
+
+  // On Moodle 4.5.1+ (Build: 20250124) and edu-sharing we don't have a LTI deep linking launch before this launch. So, we might not get any 'custom' values here.
+  const custom: unknown = idToken.platformContext?.custom
+
+  const customValid = isCustomValid(custom, isEdusharing)
+  if (!customValid) {
+    res
+      .status(400)
+      .send(
+        errorMessageToUser(
+          `Invalid LTI custom claim. Got ${JSON.stringify(custom)}`
+        )
+      )
+    return
+  }
+
+  function isCustomValid(custom: unknown, isEdusharing: boolean) {
+    if (!isEdusharing) return true
+
+    // edu-sharing only
+    // We need these later in the edu-sharing plugin
+    const expectedCustomType = t.intersection([
+      t.type({
+        getContentApiUrl: t.string,
+        appId: t.string,
+        dataToken: t.string,
+        nodeId: t.string,
+        user: t.string,
+      }),
+      t.partial({
+        fileName: t.string,
+        /** Is set when editor was opened in edit mode */
+        postContentApiUrl: t.string,
+        version: t.string,
+      }),
+    ])
+    return expectedCustomType.is(custom)
+  }
+
+  const mariaDB = getMariaDB()
+
+  // First open -> Create new row in database
+  // Not first open -> Get existing row in database
+  const entity = await mariaDB.createOrGetEntity({
+    resourceLinkId,
+    iss,
+    idToken,
+    custom,
+  })
+
+  const editorMode = getEditorMode(idToken, custom, isEdusharing)
+
+  function getEditorMode(
+    idToken: IdToken,
+    custom: unknown,
+    isEdusharing: boolean
+  ) {
+    if (isEdusharing) {
+      return t.type({ postContentApiUrl: t.string }).is(custom) &&
+        custom.postContentApiUrl
+        ? 'write'
+        : 'read'
+    }
+
+    // https://www.imsglobal.org/spec/lti/v1p3#lis-vocabulary-for-context-roles
+    // Example roles claim from itslearning
+    // "https://purl.imsglobal.org/spec/lti/claim/roles":[
+    //   0:"http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"
+    //   1:"http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
+    // ]
+    const rolesWithWriteAccess = [
+      'membership#Administrator',
+      'membership#ContentDeveloper',
+      'membership#Instructor',
+      'membership#Mentor',
+      'membership#Manager',
+      'membership#Officer',
+      // This role is sent in the itslearning library and we disallow editing there for now
+      // 'membership#Member',
+    ]
+    const courseMembershipRole = idToken.platformContext?.roles?.find((role) =>
+      role.includes('membership#')
+    )
+    return courseMembershipRole &&
+      rolesWithWriteAccess.some((roleWithWriteAccess) =>
+        courseMembershipRole.includes(roleWithWriteAccess)
+      )
+      ? 'write'
+      : 'read'
+  }
+
+  const accessToken = createAccessToken(editorMode, entity.id, ltijsKey)
+
+  const ltik = res.locals.ltik
+  const title = idToken.platformContext?.resource?.title
+  const contextTitle = idToken.platformContext?.context?.title
+
+  const searchParams = new URLSearchParams()
+  searchParams.append('accessToken', accessToken)
+  searchParams.append('resourceLinkId', resourceLinkId)
+  searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
+  searchParams.append('ltik', ltik)
+  searchParams.append('contextTitle', contextTitle ?? '')
+  searchParams.append('title', title ?? '')
+
+  // Open editor
+  return ltijs.redirect(res, `/app?${searchParams.toString()}`)
 }
 
 export async function getEntity(req: Request, res: Response) {

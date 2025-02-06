@@ -6,6 +6,9 @@ import {
   createPool,
 } from 'mysql2/promise'
 import config from '../utils/config'
+import { type Entity } from '.'
+import { IdToken } from './types/idtoken'
+import * as t from 'io-ts'
 
 let database: Database | null = null
 
@@ -23,6 +26,51 @@ export class Database {
   constructor(pool: Pool) {
     this.pool = pool
     this.state = { type: 'OutsideOfTransaction' }
+  }
+
+  public async createOrGetEntity({
+    custom,
+    idToken,
+    iss,
+    resourceLinkId,
+  }: {
+    custom: unknown
+    idToken: IdToken
+    iss: string
+    resourceLinkId: string
+  }) {
+    const mariaDB = getMariaDB()
+    // Check if there is already a database entry with (iss, resource_link_id)
+    const existingEntity = await mariaDB.fetchOptional<Entity | null>(
+      'SELECT * FROM lti_entity WHERE resource_link_id = ? AND iss = ?',
+      [resourceLinkId, iss]
+    )
+    if (existingEntity) {
+      return existingEntity
+    }
+
+    const customClaimId = t.type({ id: t.string }).is(custom) ? custom.id : null
+    const edusharingNodeId = t.type({ nodeId: t.string }).is(custom)
+      ? custom.nodeId
+      : null
+
+    // If there is no existing entity, create one
+    const insertionResult = await mariaDB.mutate(
+      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, id_token_on_creation) values (?, ?, ?, ?, ?)',
+      [
+        iss,
+        resourceLinkId,
+        customClaimId,
+        edusharingNodeId,
+        JSON.stringify(idToken),
+      ]
+    )
+
+    const insertedEntity = await mariaDB.fetchOne<Entity>(
+      'SELECT * FROM lti_entity WHERE id = ?',
+      [insertionResult.insertId]
+    )
+    return insertedEntity
   }
 
   public async beginTransaction() {
