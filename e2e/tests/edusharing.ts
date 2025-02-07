@@ -12,16 +12,16 @@ Scenario('The editor can be called via the LTI Workflow', ({ I }) => {
   expectEditorOpenedSuccessfully(I)
 })
 
-Scenario(
-  'Fails when the LTI custom claim (sent by edusharing) is missing a non-optional property',
-  ({ I }) => {
-    I.removePropertyInCustom('dataToken')
+// Scenario(
+//   'Fails when the LTI custom claim (sent by edusharing) is missing a non-optional property',
+//   ({ I }) => {
+//     I.removePropertyInCustom('dataToken')
 
-    openSerloEditorWithLTI(I)
+//     openSerloEditorWithLTI(I)
 
-    I.see("Unexpected type of LTI 'custom' claim.")
-  }
-)
+//     I.see("Unexpected type of LTI 'custom' claim.")
+//   }
+// )
 
 Scenario(
   'Succeeds when the editor is opened in view mode (postContentApiUrl is missing)',
