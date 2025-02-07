@@ -2,20 +2,15 @@ import './util/sentry.js'
 import { Provider as ltijs } from 'ltijs'
 import path from 'path'
 
-import * as t from 'io-ts'
 import * as Sentry from '@sentry/node'
 import { NextFunction, Request, Response } from 'express'
-import { createAccessToken } from './util/create-acccess-token'
 import { registerLtiPlatforms } from './util/register-lti-platforms'
 import config from '../utils/config'
 import * as edusharing from './edusharing'
 import * as editor from './editor-route-handlers'
 import * as ai from './ai-route-handlers'
-import { getMariaDB } from './mariadb'
 import * as media from './media-route-handlers'
 import { logger } from '../utils/logger'
-import { IdToken } from './types/idtoken'
-import { errorMessageToUser } from './error-message-to-user'
 
 const ltijsKey = config.LTIJS_KEY
 
