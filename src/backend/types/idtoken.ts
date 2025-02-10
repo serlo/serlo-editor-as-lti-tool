@@ -16,4 +16,5 @@ export interface IdToken {
     }
   }
   iss: string
+  user: string
 }

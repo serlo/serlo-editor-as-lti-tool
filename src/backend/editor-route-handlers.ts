@@ -108,12 +108,26 @@ export async function onConnect(idToken: IdToken, _: Request, res: Response) {
   // Unique id for a serlo editor resource link on the platform
   const resourceLinkId = idToken.platformContext?.resource?.id
   if (!resourceLinkId) {
-    res.status(400).send(errorMessageToUser('resource link id missing'))
+    res
+      .status(400)
+      .send(errorMessageToUser('resource_link.id missing in idToken'))
     return
   }
 
-  // The platform id
+  // The LTI platform id
   const iss = idToken.iss
+  if (!iss) {
+    res.status(400).send(errorMessageToUser('iss missing in idToken'))
+    return
+  }
+
+  // User id
+  const user = idToken.user
+  if (!user) {
+    res.status(400).send(errorMessageToUser('sub missing in idToken'))
+    return
+  }
+
   const isEdusharing = iss.includes('edu-sharing')
 
   // On Moodle 4.5.1+ (Build: 20250124) and edu-sharing we don't have a LTI deep linking launch before this launch. So, we might not get any 'custom' values here.
@@ -131,80 +145,19 @@ export async function onConnect(idToken: IdToken, _: Request, res: Response) {
     return
   }
 
-  function isCustomValid(custom: unknown, isEdusharing: boolean) {
-    if (!isEdusharing) return true
-
-    // edu-sharing only
-    // We need these later in the edu-sharing plugin
-    const expectedCustomType = t.intersection([
-      t.type({
-        getContentApiUrl: t.string,
-        appId: t.string,
-        dataToken: t.string,
-        nodeId: t.string,
-        user: t.string,
-      }),
-      t.partial({
-        fileName: t.string,
-        /** Is set when editor was opened in edit mode */
-        postContentApiUrl: t.string,
-        version: t.string,
-      }),
-    ])
-    return expectedCustomType.is(custom)
-  }
-
   const mariaDB = getMariaDB()
 
   // First open -> Create new row in database
   // Not first open -> Get existing row in database
   const entity = await mariaDB.createOrGetEntity({
-    resourceLinkId,
-    iss,
-    idToken,
     custom,
+    idToken,
+    iss,
+    resourceLinkId,
+    user,
   })
 
   const editorMode = getEditorMode(idToken, custom, isEdusharing)
-
-  function getEditorMode(
-    idToken: IdToken,
-    custom: unknown,
-    isEdusharing: boolean
-  ) {
-    if (isEdusharing) {
-      return t.type({ postContentApiUrl: t.string }).is(custom) &&
-        custom.postContentApiUrl
-        ? 'write'
-        : 'read'
-    }
-
-    // https://www.imsglobal.org/spec/lti/v1p3#lis-vocabulary-for-context-roles
-    // Example roles claim from itslearning
-    // "https://purl.imsglobal.org/spec/lti/claim/roles":[
-    //   0:"http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"
-    //   1:"http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
-    // ]
-    const rolesWithWriteAccess = [
-      'membership#Administrator',
-      'membership#ContentDeveloper',
-      'membership#Instructor',
-      'membership#Mentor',
-      'membership#Manager',
-      'membership#Officer',
-      // This role is sent in the itslearning library and we disallow editing there for now
-      // 'membership#Member',
-    ]
-    const courseMembershipRole = idToken.platformContext?.roles?.find((role) =>
-      role.includes('membership#')
-    )
-    return courseMembershipRole &&
-      rolesWithWriteAccess.some((roleWithWriteAccess) =>
-        courseMembershipRole.includes(roleWithWriteAccess)
-      )
-      ? 'write'
-      : 'read'
-  }
 
   const accessToken = createAccessToken(editorMode, entity.id, ltijsKey)
 
@@ -222,6 +175,68 @@ export async function onConnect(idToken: IdToken, _: Request, res: Response) {
 
   // Open editor
   return ltijs.redirect(res, `/app?${searchParams.toString()}`)
+}
+
+function isCustomValid(custom: unknown, isEdusharing: boolean) {
+  if (!isEdusharing) return true
+
+  // edu-sharing only
+  // We need these later in the edu-sharing plugin
+  const expectedCustomType = t.intersection([
+    t.type({
+      getContentApiUrl: t.string,
+      appId: t.string,
+      dataToken: t.string,
+      nodeId: t.string,
+      user: t.string,
+    }),
+    t.partial({
+      fileName: t.string,
+      /** Is set when editor was opened in edit mode */
+      postContentApiUrl: t.string,
+      version: t.string,
+    }),
+  ])
+  return expectedCustomType.is(custom)
+}
+
+function getEditorMode(
+  idToken: IdToken,
+  custom: unknown,
+  isEdusharing: boolean
+) {
+  if (isEdusharing) {
+    return t.type({ postContentApiUrl: t.string }).is(custom) &&
+      custom.postContentApiUrl
+      ? 'write'
+      : 'read'
+  }
+
+  // https://www.imsglobal.org/spec/lti/v1p3#lis-vocabulary-for-context-roles
+  // Example roles claim from itslearning
+  // "https://purl.imsglobal.org/spec/lti/claim/roles":[
+  //   0:"http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"
+  //   1:"http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
+  // ]
+  const rolesWithWriteAccess = [
+    'membership#Administrator',
+    'membership#ContentDeveloper',
+    'membership#Instructor',
+    'membership#Mentor',
+    'membership#Manager',
+    'membership#Officer',
+    // This role is sent in the itslearning library and we disallow editing there for now
+    // 'membership#Member',
+  ]
+  const courseMembershipRole = idToken.platformContext?.roles?.find((role) =>
+    role.includes('membership#')
+  )
+  return courseMembershipRole &&
+    rolesWithWriteAccess.some((roleWithWriteAccess) =>
+      courseMembershipRole.includes(roleWithWriteAccess)
+    )
+    ? 'write'
+    : 'read'
 }
 
 export async function getEntity(req: Request, res: Response) {
