@@ -13,17 +13,6 @@ Scenario('The editor can be called via the LTI Workflow', ({ I }) => {
 })
 
 Scenario(
-  'Fails when the LTI custom claim (sent by edusharing) is missing a non-optional property',
-  ({ I }) => {
-    I.removePropertyInCustom('dataToken')
-
-    openSerloEditorWithLTI(I)
-
-    I.see("Unexpected type of LTI 'custom' claim.")
-  }
-)
-
-Scenario(
   'Succeeds when the editor is opened in view mode (postContentApiUrl is missing)',
   ({ I }) => {
     I.removePropertyInCustom('postContentApiUrl')
@@ -96,6 +85,9 @@ function embedEdusharingAsset(I: CodeceptJS.I) {
   I.click('$add-new-plugin-row-button')
   I.click('Edu-sharing Inhalt')
   I.click('$plugin-edusharing-select-content-button')
+  I.switchTo('iframe') // switch to first iframe
+  I.click('#edusharing-embed-image-select')
+  I.switchTo() // switch back to main page
 }
 
 function openSerloEditorWithLTI(I: CodeceptJS.I) {

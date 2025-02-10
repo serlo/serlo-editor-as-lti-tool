@@ -21,7 +21,7 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "mocks"],
   "references": [{ "path": "./tsconfig.node.json" }],
   "ts-node": {
     "experimentalSpecifierResolution": "node",

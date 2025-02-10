@@ -15,17 +15,20 @@ echo 'Configure IONOS S3 Client to manage buckets'
 s3cmd --configure
 
 echo 'Downloading the .env file'
-if ! s3cmd cp s3://edtr-env/${USER}/.env .; then
+if ! s3cmd get s3://edtr-env/${USER}/.env .; then
   echo 'Error: File not found or download failed!'
   echo 'Set the .env file in the bucket first'
   exit 1
 fi
 
 # Pull env into current shell
+set -a
 source .env
+set +a
 
-echo 'Setting up initial data for MariaDB'
-mariadb < docker-entrypoint-initdb.d/001-init.sql
+echo "Hopefully you have sett up initial data for MariaDB using the command at docker-entrypoint-initdb.d/001-init.sql change serlo for $USER"
+# mariadb < docker-entrypoint-initdb.d/001-init.sql doesn't work, find another way
+
 
 # Set up MongoDB
 if ! $(uberspace tools version show mongodb | grep -q '6.0'); then
@@ -74,13 +77,14 @@ if ! $(uberspace web backend list | grep -q 'http:3000 => OK, listening'); then
 fi
 echo 'Backend app opened to the internet'
 
+# TODO: still needed?
 # Only on 'production' environment
-if [ "$USER" = "edtr" ]; then
-  # IMPORTANT: This completely overwrites existing cronjob entries!
-  crontab ~/serlo-editor-as-lti-tool/uberspace/backup_cron
-  echo 'Added cronjob for database backups'
+# if [ "$USER" = "edtr" ]; then
+#   # IMPORTANT: This completely overwrites existing cronjob entries!
+#   crontab ~/serlo-editor-as-lti-tool/uberspace/backup_cron
+#   echo 'Added cronjob for database backups'
 
-  echo 'Available buckets:'
-  s3cmd ls
-  echo 'Create bucket serlo-test-database-backup manually if it does not appear here.'
-fi
+#   echo 'Available buckets:'
+#   s3cmd ls
+#   echo 'Create bucket serlo-test-database-backup manually if it does not appear here.'
+# fi

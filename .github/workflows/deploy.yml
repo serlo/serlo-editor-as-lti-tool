@@ -3,6 +3,7 @@ name: Deploy to Uberspace
 on:
   push:
     branches:
+      - production
       - staging
       - development
 
@@ -25,8 +26,16 @@ jobs:
           echo "REMOTE_USER=${{ secrets.REMOTE_USER_STAGING }}" >> $GITHUB_ENV
           echo "DOMAIN=https://editor.serlo-staging.dev/" >> $GITHUB_ENV
 
+      - name: Set environment variables for production
+        if: ${{ github.ref_name == 'production' }}
+        run: |
+          echo "REMOTE_HOST=${{ secrets.REMOTE_HOST_PRODUCTION }}" >> $GITHUB_ENV
+          echo "REMOTE_USER=${{ secrets.REMOTE_USER_PRODUCTION }}" >> $GITHUB_ENV
+          echo "DOMAIN=https://editor.serlo.org/" >> $GITHUB_ENV
+
+      # Maybe split ssh key between production and others
       - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.1.0
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{  env.REMOTE_HOST }}
           username: ${{ env.REMOTE_USER }}
@@ -41,4 +50,7 @@ jobs:
             supervisorctl restart serlo-app
 
       - name: Test deployment successful
-        run: sleep 5 && curl ${{ env.DOMAIN }} | grep NO_LTIK_OR_IDTOKEN_FOUND
+        run:
+          for ((i=0; i<30; i++)); do curl ${{ env.DOMAIN }} | grep -q
+          "NO_LTIK_OR_IDTOKEN_FOUND" && exit 0; sleep 1; done; echo "Server not
+          ready within 30 seconds." && exit 1

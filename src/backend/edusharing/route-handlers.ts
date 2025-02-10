@@ -1,4 +1,3 @@
-import { IdToken } from 'ltijs'
 import jwt from 'jsonwebtoken'
 import * as t from 'io-ts'
 import urlJoin from 'url-join'
@@ -13,6 +12,7 @@ import { Collection, MongoClient, ObjectId } from 'mongodb'
 import { Request, Response } from 'express'
 import { getEdusharingAsToolConfiguration } from './edusharing-as-tool-configuration'
 import config from '../../utils/config'
+import { IdToken } from '../types/idtoken'
 
 const editorUrl = config.EDITOR_URL
 
@@ -49,7 +49,7 @@ export async function init() {
 }
 
 export async function start(_: Request, res: Response) {
-  const idToken = res.locals.token as IdToken
+  const idToken = res.locals.token as unknown as IdToken
   const issWhenEdusharingLaunchedSerloEditor = idToken.iss
 
   const custom: unknown = res.locals.context?.custom

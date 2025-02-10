@@ -2,8 +2,8 @@ import express from 'express'
 import { v4 as uuid_v4 } from 'uuid'
 import * as jose from 'jose'
 import urlJoin from 'url-join'
-import { createAutoFormResponse } from '../backend/util/create-auto-form-response'
-import config from '../utils/config'
+import config from '../src/utils/config'
+import { createAutoFormResponse } from '../src/backend/util/create-auto-form-response'
 
 const itslearningMockDeploymentId = '1'
 const itslearningMockIssuer = 'http://localhost:8101/itslearning'
@@ -66,7 +66,7 @@ export class ItslearningServer {
         'https://purl.imsglobal.org/spec/lti/claim/roles': this.roles,
         'https://purl.imsglobal.org/spec/lti/claim/context': {
           id: itslearningMockContextId,
-          title: 'Serlo',
+          title: 'Example course name',
           type: ['http://purl.imsglobal.org/vocab/lis/v2/course#CourseSection'],
         },
         'https://purl.imsglobal.org/spec/lti/claim/target_link_uri': urlJoin(
@@ -75,7 +75,7 @@ export class ItslearningServer {
         ),
         'https://purl.imsglobal.org/spec/lti/claim/resource_link': {
           id: '3061:3245',
-          title: 'Test Content',
+          title: 'Example content name',
         },
         'https://purl.imsglobal.org/spec/lti/claim/message_type':
           'LtiResourceLinkRequest',

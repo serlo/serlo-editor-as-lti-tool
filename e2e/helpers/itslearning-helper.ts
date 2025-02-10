@@ -1,7 +1,6 @@
 import { Helper } from 'codeceptjs'
 import { Server } from 'http'
-
-import { ItslearningServer } from '../../src/itslearning-mock/server'
+import { ItslearningServer } from '../../mocks'
 
 class ItslearningHelper extends Helper {
   private itslearningMock: ItslearningServer

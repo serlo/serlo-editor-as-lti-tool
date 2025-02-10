@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:6
+    image: mongo:6 # Match major version on Uberspace
     ports:
       - 27017:27017
   mariadb:

@@ -27,10 +27,11 @@ restart and the frontend will be rebuilt.
    flow of opening an existing Serlo Editor element as Learner (non-editable).
 2. Click "Connect"
 
-## Launch through edu-sharing mock
+## Launch through mocked services
 
-1. `yarn dev-edusharing` to start the edu-sharing mock
-2. Open `http://localhost:8100`
+1. `yarn dev-mocks` to start the edu-sharing/itslearning mocks
+2. Open `http://localhost:8100` (edu-sharing) or `http://localhost:8101`
+   (itslearning)
 
 # Technical details
 
@@ -107,22 +108,77 @@ $ git push
 
 # Embed Serlo editor in iframe
 
-Iframes can limit access to required functionality (especially for cross-origin
-embedding). Make sure the iframe embedding the Serlo editor allows access to the
-clipboard & allows full screen. Also, if the `sandbox` attribute is present make
-sure to allow `allow-forms`, `allow-modals`, `allow-popups`, `allow-scripts` and
-maybe some more.
+Iframes provide security to the host page but can limit access to required
+functionality (especially for cross-origin embedding). Please use the following
+settings in iframe attributes `sandbox` and `allow`.
+
+## sandbox
+
+If you have/want attribute `sandbox` use:
 
 ```html
-<!-- Allow for all origins (can be unsave) -->
-<iframe allow="clipboard-read *; clipboard-write *; fullscreen *"></iframe>
-
-<!-- Allow for only https://editor.serlo.org and https://editor.serlo-staging.dev -->
 <iframe
-  allow="
-   clipboard-read https://editor.serlo.org https://editor.serlo-staging.dev;
-   clipboard-write https://editor.serlo.org https://editor.serlo-staging.dev;
-   fullscreen https://editor.serlo.org https://editor.serlo-staging.dev
+  sandbox="
+    allow-downloads
+    allow-forms
+    allow-modals
+    allow-popups
+    allow-popups-to-escape-sandbox
+    allow-presentation
+    allow-same-origin
+    allow-scripts
+    allow-storage-access-by-user-activation
   "
+  src="..."
+  ...
 ></iframe>
+```
+
+If you don't have/want attribute `sandbox` it can also be missing. But never an
+empty string.
+
+```html
+<!-- Do not use -->
+<iframe sandbox="" src="..."></iframe>
+```
+
+## allow
+
+If you have/want attribute `allow` use
+
+```html
+<iframe
+  allow=" 
+    clipboard-read https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev; 
+    clipboard-write https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev; 
+    fullscreen https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev; 
+    autoplay https://editor.serlo.org https://staging.editor.serlo.org https://dev.editor.serlo.org https://editor.serlo-staging.dev 
+  "
+  src="..."
+  ...
+></iframe>
+```
+
+or
+
+```html
+<!-- Allows all origins access -->
+<iframe
+  ...
+  allow="
+   clipboard-read *;
+   clipboard-write *;
+   fullscreen *;
+   autoplay *
+  "
+  src="..."
+></iframe>
+```
+
+If you don't have/want attribute `allow` it can also be missing. But never an
+empty string.
+
+```html
+<!-- Do not use -->
+<iframe allow="" src="..."></iframe>
 ```

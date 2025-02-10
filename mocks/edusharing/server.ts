@@ -6,9 +6,10 @@ import { imageEmbedJson } from './mocked-embed-json/image'
 import { v4 as uuid_v4 } from 'uuid'
 import * as jose from 'jose'
 import urlJoin from 'url-join'
-import { createAutoFormResponse } from '../backend/util/create-auto-form-response'
-import { serverLog } from '../utils/server-log'
-import config from '../utils/config'
+import { createAutoFormResponse } from '../../src/backend/util/create-auto-form-response'
+import { logger } from '../../src/utils/logger'
+import config from '../../src/utils/config'
+import { wordEmbedJson } from './mocked-embed-json/word'
 
 export const editorUrl = config.EDITOR_URL
 
@@ -93,6 +94,7 @@ export class EdusharingServer {
         'https://purl.imsglobal.org/spec/lti/claim/context': {
           id: this.contextId,
           label: this.custom.user,
+          title: 'Example course name',
         },
         'https://purl.imsglobal.org/spec/lti/claim/target_link_uri': urlJoin(
           editorUrl,
@@ -100,7 +102,7 @@ export class EdusharingServer {
         ),
         'https://purl.imsglobal.org/spec/lti/claim/resource_link': {
           id: this.custom.nodeId,
-          title: 'Test Content',
+          title: 'Example content name',
         },
         'https://purl.imsglobal.org/spec/lti/claim/launch_presentation': {
           document_target: 'window',
@@ -165,7 +167,7 @@ export class EdusharingServer {
         if (VersionComment.is(comment)) {
           this.savedVersions.push({ comment })
           this.content = JSON.parse(req.file.buffer.toString())
-          serverLog(
+          logger.info(
             `[${new Date().toISOString()}]: Save registered with comment ${
               req.query['versionComment']
             }`
@@ -223,6 +225,97 @@ export class EdusharingServer {
       }
     )
 
+    this.app.get(
+      '/edu-sharing/rest/lti/v13/generateDeepLinkingResponse',
+      async (req, res) => {
+        const idToken = req.query.id_token
+        if (typeof idToken !== 'string') {
+          res.status(400).send('id_token is undefined')
+          return
+        }
+
+        const embedType = req.query['embed-type']
+
+        const serloEditorJwks = jose.createRemoteJWKSet(
+          new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
+        )
+
+        const verifyResult = await jose.jwtVerify(idToken, serloEditorJwks, {
+          audience: edusharingMockClientId,
+          issuer: editorUrl,
+          subject: this.user,
+        })
+
+        const idTokenDecoded = verifyResult.payload
+        const idTokenType = t.type({
+          'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings':
+            t.type({
+              data: t.string,
+              deep_link_return_url: t.string,
+            }),
+        })
+
+        if (!idTokenType.is(idTokenDecoded)) {
+          res.status(400).send('Missing property in id token')
+          return
+        }
+
+        const deeplinkReturnUrl =
+          idTokenDecoded[
+            'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'
+          ].deep_link_return_url
+        const data =
+          idTokenDecoded[
+            'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'
+          ].data
+
+        const payload = {
+          iss: edusharingMockClientId,
+          aud: editorUrl,
+          nonce: this.nonce,
+          azp: editorUrl,
+          'https://purl.imsglobal.org/spec/lti/claim/deployment_id': '2',
+          'https://purl.imsglobal.org/spec/lti/claim/message_type':
+            'LtiDeepLinkingResponse',
+          'https://purl.imsglobal.org/spec/lti/claim/version': '1.3.0',
+          'https://purl.imsglobal.org/spec/lti-dl/claim/data': data,
+          'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': [
+            {
+              custom: {
+                repositoryId: 'serlo-edusharing',
+                nodeId: '960c48d0-5e01-45ca-aaf6-d648269f0db2' + embedType,
+              },
+              icon: {
+                width: 'null',
+                url: `https://repository.staging.cloud.schulcampus-rlp.de/edu-sharing/themes/default/images/common/mime-types/svg/file-${embedType}.svg`,
+                height: 'null',
+              },
+              type: 'ltiResourceLink',
+              title: 'Test ' + embedType,
+              url:
+                'http://localhost:8100/edu-sharing/rest/lti/v13/lti13/960c48d0-5e01-45ca-aaf6-d648269f0db2' +
+                embedType,
+            },
+          ],
+        }
+
+        const jwt = await new jose.SignJWT(payload)
+          .setIssuedAt()
+          .setProtectedHeader({ alg: 'RS256', kid: this.keyId, typ: 'JWT' })
+          .setExpirationTime('1h')
+          .sign((await this.keys).privateKey)
+
+        createAutoFormResponse({
+          res,
+          method: 'POST',
+          targetUrl: deeplinkReturnUrl,
+          params: {
+            JWT: jwt,
+          },
+        })
+      }
+    )
+
     this.app.post('/edu-sharing/rest/lti/v13/lti13', async (req, res) => {
       if (
         isEditorValueInvalid({
@@ -234,99 +327,45 @@ export class EdusharingServer {
         })
       )
         return
+      const embedTypes = ['image', 'word']
+      const searchParams = new URLSearchParams()
+      searchParams.append('id_token', req.body.id_token)
 
-      if (typeof req.body.id_token !== 'string') {
-        res.status(400).send('id_token is undefined')
-        return
-      }
+      res.setHeader('Content-Type', 'text/html')
+      res.send(
+        `<!DOCTYPE html>
+        <html>
+          <body>
+            <p>Select type of embed</p>
+            <div>
+              ${embedTypes
+                .map(
+                  (embedType) =>
+                    `<a id="edusharing-embed-${embedType}-select" href="/edu-sharing/rest/lti/v13/generateDeepLinkingResponse?id_token=${req.body.id_token}&embed-type=${embedType}">${embedType}</a>`
+                )
+                .join(' | ')}
+            </div>
+            <br>
+            <br>
+            <p style="color: lightgrey; font-size: 5rem">Content to fill up iframe: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam finibus sollicitudin nunc sed ultrices. Nulla orci mauris, gravida ac accumsan non, varius convallis augue. Aliquam metus lacus, tempor in molestie vel, ornare ut ex. Sed suscipit mollis orci, ac porttitor magna iaculis vel. Quisque mattis rutrum sodales. Cras sodales eros lorem, sodales consequat est feugiat nec. Duis pellentesque vel felis sit amet accumsan. Mauris a volutpat metus, ac dignissim justo.
 
-      const serloEditorJwks = jose.createRemoteJWKSet(
-        new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
+            Duis commodo mi elit, tristique pharetra tortor vulputate ultricies. Vestibulum at semper mi, vitae accumsan felis. Duis dictum erat eu mi rutrum dapibus. Donec rutrum orci et velit faucibus, sed laoreet eros malesuada. Phasellus quis rutrum quam. Vivamus nec sagittis nisl, eu eleifend justo. Morbi at quam ipsum. Praesent vestibulum consectetur velit quis condimentum. Mauris tempus interdum justo ac vestibulum. Duis finibus malesuada tempor. Aliquam sit amet orci quis nibh vulputate egestas. Nam sagittis hendrerit lectus, porta fringilla nulla euismod ut. Morbi in quam dapibus, aliquet tellus id, ornare velit. Vivamus sed euismod urna. Suspendisse bibendum malesuada nisl sed fringilla.
+            </p>
+          </body>
+        </html>
+        `.trim()
       )
-
-      const verifyResult = await jose.jwtVerify(
-        req.body.id_token,
-        serloEditorJwks,
-        {
-          audience: edusharingMockClientId,
-          issuer: editorUrl,
-          subject: this.user,
-        }
-      )
-
-      const idToken = verifyResult.payload
-      const idTokenType = t.type({
-        'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings':
-          t.type({
-            data: t.string,
-            deep_link_return_url: t.string,
-          }),
-      })
-
-      if (!idTokenType.is(idToken)) {
-        res.status(400).send('Missing property in id token')
-        return
-      }
-
-      const deeplinkReturnUrl =
-        idToken[
-          'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'
-        ].deep_link_return_url
-      const data =
-        idToken[
-          'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings'
-        ].data
-
-      const payload = {
-        iss: edusharingMockClientId,
-        aud: editorUrl,
-        nonce: this.nonce,
-        azp: editorUrl,
-        'https://purl.imsglobal.org/spec/lti/claim/deployment_id': '2',
-        'https://purl.imsglobal.org/spec/lti/claim/message_type':
-          'LtiDeepLinkingResponse',
-        'https://purl.imsglobal.org/spec/lti/claim/version': '1.3.0',
-        'https://purl.imsglobal.org/spec/lti-dl/claim/data': data,
-        'https://purl.imsglobal.org/spec/lti-dl/claim/content_items': [
-          {
-            custom: {
-              repositoryId: 'serlo-edusharing',
-              nodeId: '960c48d0-5e01-45ca-aaf6-d648269f0db2',
-            },
-            icon: {
-              width: 'null',
-              url: 'http://localhost:8100/edu-sharing/themes/default/images/common/mime-types/svg/file-image.svg',
-              height: 'null',
-            },
-            type: 'ltiResourceLink',
-            title: 'Test Image',
-            url: 'http://localhost:8100/edu-sharing/rest/lti/v13/lti13/960c48d0-5e01-45ca-aaf6-d648269f0db2',
-          },
-        ],
-      }
-
-      const jwt = await new jose.SignJWT(payload)
-        .setIssuedAt()
-        .setProtectedHeader({ alg: 'RS256', kid: this.keyId, typ: 'JWT' })
-        .setExpirationTime('1h')
-        .sign((await this.keys).privateKey)
-
-      createAutoFormResponse({
-        res,
-        method: 'POST',
-        targetUrl: deeplinkReturnUrl,
-        params: {
-          JWT: jwt,
-        },
-      })
     })
 
-    this.app.get('/edu-sharing/rest/lti/v13/details/*/*', (_req, res) => {
-      res.json(imageEmbedJson)
+    this.app.get('/edu-sharing/rest/lti/v13/details/*/*', (req, res) => {
+      const embedData = req.url.includes('image?')
+        ? imageEmbedJson
+        : wordEmbedJson
+      res.json(embedData)
     })
 
     this.app.all('*', (req, res) => {
-      serverLog(`${req.method} call to ${req.url} registered`)
+      logger.info(`${req.method} call to ${req.url} registered`)
       res.sendStatus(404).end()
     })
   }

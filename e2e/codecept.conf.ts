@@ -14,6 +14,14 @@ export const config: CodeceptJS.MainConfig = {
       url: 'http://localhost:3000',
       show: true,
     },
+    ChaiWrapper: {
+      require: 'codeceptjs-chai',
+    },
+    REST: {
+      endpoint: 'http://localhost:3000',
+      prettyPrintJson: true,
+    },
+    JSONResponse: {},
     EdusharingHelper: {
       require: './helpers/edusharing-helper.ts',
     },

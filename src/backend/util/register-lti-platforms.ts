@@ -1,8 +1,8 @@
 import { Provider as ltijs } from 'ltijs'
-import { edusharingMockClientId } from '../../edusharing-mock/server'
 import { edusharingAsToolConfigs } from '../edusharing'
-import { serverLog } from '../../utils/server-log'
+import { logger } from '../../utils/logger'
 import config from '../../utils/config'
+import { edusharingMockClientId } from '../../../mocks'
 
 export async function registerLtiPlatforms() {
   if (config.ENVIRONMENT === 'staging') {
@@ -36,7 +36,7 @@ export async function registerLtiPlatforms() {
         detailsEndpoint: config.EDUSHARING_RLP_DETAILS_ENDPOINT,
         keysetEndpoint: config.EDUSHARING_RLP_KEYSET_ENDPOINT,
       })
-      serverLog('Registered tool: edu-sharing (RLP)')
+      logger.info('Registered tool: edu-sharing (RLP)')
     }
   }
 
@@ -66,7 +66,7 @@ export async function registerLtiPlatforms() {
           'http://localhost:8100/edu-sharing/rest/lti/v13/details',
         keysetEndpoint: 'http://localhost:8100/edu-sharing/rest/lti/v13/jwks',
       })
-      serverLog(`Registered tool: edusharing-mock`)
+      logger.info(`Registered tool: edusharing-mock`)
     }
 
     // Register platform: itslearning mock
@@ -93,6 +93,20 @@ export async function registerLtiPlatforms() {
     //       key: 'https://serlo-edusharing_repository-service_1:8080/edu-sharing/rest/lti/v13/jwks',
     //       // key: 'http://repository-service:8080/edu-sharing/rest/lti/v13/jwks',
     //   })
+  }
+
+  if (config.ENVIRONMENT === 'development') {
+    await registerSaltire()
+
+    // Register platform: moodle test
+    await registerPlatform({
+      url: config.MOODLE_URL,
+      name: config.MOODLE_NAME,
+      clientId: config.SERLO_EDITOR_CLIENT_ID_ON_MOODLE,
+      authenticationEndpoint: config.MOODLE_AUTHENTICATION_ENDPOINT,
+      accesstokenEndpoint: config.MOODLE_ACCESS_TOKEN_ENDPOINT,
+      key: config.MOODLE_KEYSET_ENDPOINT,
+    })
   }
 }
 
@@ -123,7 +137,7 @@ async function registerPlatform({
     },
   })
   if (platform) {
-    serverLog(`Registered platform: ${name}`)
+    logger.info(`Registered platform: ${name}`)
     return platform
   }
   throw new Error(`Platform ${name} could not be registered`)

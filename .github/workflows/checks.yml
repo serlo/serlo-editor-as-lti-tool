@@ -37,6 +37,10 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      BUCKET_ACCESS_KEY_ID: ${{ secrets.BUCKET_ACCESS_KEY_ID }}
+      BUCKET_SECRET_ACCESS_KEY: ${{ secrets.BUCKET_SECRET_ACCESS_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node
@@ -44,15 +48,7 @@ jobs:
       - run: yarn install
       - run: yarn build
       - run: yarn dev:databases -d
-      # Run `yarn start` in background (otherwise it would block)
-      - run: |
-          nohup yarn start &
-          echo $! > app.pid
+      - run: yarn start > output.log 2>&1 &
       - run: yarn playwright install
       - run: yarn wait-for-server
       - run: HEADLESS=true yarn test
-      # End background process
-      - run: |
-          if [ -f app.pid ]; then
-            kill -9 $(cat app.pid) || echo "App already stopped"
-          fi

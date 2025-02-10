@@ -1,22 +1,16 @@
-import { IdToken, Provider as ltijs } from 'ltijs'
+import './util/sentry.js'
+import { Provider as ltijs } from 'ltijs'
 import path from 'path'
 
-import { v4 as uuid_v4 } from 'uuid'
-import * as t from 'io-ts'
+import * as Sentry from '@sentry/node'
 import { NextFunction, Request, Response } from 'express'
-import { createAccessToken } from './util/create-acccess-token'
 import { registerLtiPlatforms } from './util/register-lti-platforms'
-import urlJoin from 'url-join'
 import config from '../utils/config'
 import * as edusharing from './edusharing'
-import {
-  editorApp,
-  editorGetEntity,
-  editorPutEntity,
-} from './editor-route-handlers'
-import { getMariaDB } from './mariadb'
-import { mediaPresignedUrl, mediaProxy } from './media-route-handlers'
-import { serverLog } from '../utils/server-log'
+import * as editor from './editor-route-handlers'
+import * as ai from './ai-route-handlers'
+import * as media from './media-route-handlers'
+import { logger } from '../utils/logger'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -27,11 +21,14 @@ export interface AccessToken {
 
 export interface Entity {
   id: number
+  iss: string
+  resource_link_id?: string
   custom_claim_id?: string
-  content: string
-  resource_link_id: string
   edusharing_node_id?: string
-  id_token_on_creation: string
+  content: string
+  user_when_first_opened: string
+  id_token_when_first_opened: string
+  id_token_when_created?: string
 }
 
 const setup = async () => {
@@ -51,14 +48,19 @@ const setup = async () => {
       dynRegRoute: '/lti/register',
       staticPath: path.join(__dirname, './../../dist/frontend'), // Path to static files
       cookies: {
-        secure: config.ENVIRONMENT === 'local' ? false : true, // Set secure to true if the testing platform is in a different domain and https is being used
+        secure: config.ENVIRONMENT !== 'local', // Set secure to true if the testing platform is in a different domain and https is being used
         sameSite: config.ENVIRONMENT === 'local' ? '' : 'None', // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
       },
+      // Disables cookie verification. Temporary hack to make it work if third-party cookies are blocked. Later, use newer ltijs version that should solve this without requiring devMode.
+      devMode:
+        config.ENVIRONMENT === 'local' ||
+        config.ENVIRONMENT === 'development' ||
+        config.ENVIRONMENT === 'staging',
     }
   )
 
   await edusharing.init().catch((error) => {
-    serverLog(`Setup failed: ${error}`)
+    logger.error(`Setup failed: ${error}`)
     throw new Error('Setup failed!')
   })
 
@@ -66,7 +68,10 @@ const setup = async () => {
   ltijs.whitelist(
     '/edusharing-embed/login',
     '/edusharing-embed/done',
-    '/edusharing-embed/keys'
+    '/edusharing-embed/keys',
+    // disage ai to make it easier to develop, revert afterwards
+    '/ai/generate-content',
+    '/ai/change-content'
   )
 
   // since whitelist is not allowing wildcards we ignore the invalidToken event for selected routes
@@ -90,13 +95,15 @@ const setup = async () => {
   })
 
   // Opens Serlo editor
-  app.get('/app', editorApp)
+  app.get('/app', editor.app)
+
+  app.get('/deeplinking-done', editor.deeplinkingDone)
 
   // Endpoint to get content
-  app.get('/entity', editorGetEntity)
+  app.get('/entity', editor.getEntity)
 
   // Endpoint to save content
-  app.put('/entity', editorPutEntity)
+  app.put('/entity', editor.putEntity)
 
   // Provide endpoint to start embed flow on edu-sharing
   // Called when user clicks on "embed content from edusharing"
@@ -116,236 +123,29 @@ const setup = async () => {
 
   app.get('/edusharing-embed/get', edusharing.get)
 
-  app.get('/media/presigned-url', mediaPresignedUrl)
-  app.use(mediaProxy)
+  app.get('/media/presigned-url', media.presignedUrl)
+  app.use(media.proxyMiddleware)
+
+  app.post('/ai/generate-content', ai.generateContent)
+  app.post('/ai/change-content', ai.changeContent)
+
+  Sentry.setupExpressErrorHandler(app)
 
   // Successful LTI resource link launch
   // @ts-expect-error @types/ltijs
-  ltijs.onConnect(async (idToken, req, res) => {
-    if (
-      idToken.iss ===
-        'https://repository.staging.cloud.schulcampus-rlp.de/edu-sharing' ||
-      idToken.iss === 'http://localhost:8100/edu-sharing'
-    ) {
-      await onConnectEdusharing(idToken, req, res)
-    } else {
-      onConnectDefault(idToken, req, res)
-    }
-  }, {})
-
-  async function onConnectEdusharing(
-    idToken: IdToken,
-    _: Request,
-    res: Response
-  ) {
-    // @ts-expect-error @types/ltijs
-    const resourceLinkId: string = idToken.platformContext.resource.id
-    // @ts-expect-error @types/ltijs
-    const custom: unknown = idToken.platformContext.custom
-
-    const expectedCustomType = t.intersection([
-      t.type({
-        getContentApiUrl: t.string,
-        appId: t.string,
-        dataToken: t.string,
-        nodeId: t.string,
-        user: t.string,
-      }),
-      t.partial({
-        fileName: t.string,
-        /** Is set when editor was opened in edit mode */
-        postContentApiUrl: t.string,
-        version: t.string,
-      }),
-    ])
-
-    if (!expectedCustomType.is(custom)) {
-      res
-        .status(400)
-        .send(
-          `Unexpected type of LTI 'custom' claim. Got ${JSON.stringify(custom)}`
-        )
-      return
-    }
-
-    const entityId = await getEntityId(custom.nodeId)
-    async function getEntityId(edusharingNodeId: string) {
-      const mariaDB = getMariaDB()
-      // Check if there is already a database entry with edusharing_node_id
-      const existingEntity = await mariaDB.fetchOptional<Entity | null>(
-        `
-      SELECT
-          id
-          FROM
-          lti_entity
-        WHERE
-        edusharing_node_id = ?
-        `,
-        [String(edusharingNodeId)]
-      )
-      if (existingEntity) {
-        return existingEntity.id
-      }
-      // If there is no existing entity, create one
-      const insertedEntity = await mariaDB.mutate(
-        'INSERT INTO lti_entity (edusharing_node_id, id_token_on_creation, resource_link_id) values (?, ?, ?)',
-        [edusharingNodeId, JSON.stringify(idToken), resourceLinkId]
-      )
-      return insertedEntity.insertId
-    }
-
-    const editorMode =
-      typeof custom.postContentApiUrl === 'string' ? 'write' : 'read'
-    const accessToken = createAccessToken(editorMode, entityId, ltijsKey)
-
-    const searchParams = new URLSearchParams()
-    searchParams.append('accessToken', accessToken)
-    searchParams.append('resourceLinkId', resourceLinkId)
-    searchParams.append('ltik', res.locals.ltik)
-    searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
-
-    return ltijs.redirect(res, `/app?${searchParams}`)
-  }
-
-  async function onConnectDefault(
-    idToken: IdToken,
-    req: Request,
-    res: Response
-  ) {
-    // Get customId from lti custom claim or alternatively search query parameters
-    // Using search query params is suggested by ltijs, see: https://github.com/Cvmcosta/ltijs/issues/100#issuecomment-832284300
-    // @ts-expect-error @types/ltijs
-    const customId = idToken.platformContext.custom.id ?? req.query.id
-    if (!customId) return res.send('Missing customId!')
-
-    // @ts-expect-error @types/ltijs
-    const resourceLinkId: string = idToken.platformContext.resource.id
-
-    console.log('ltijs.onConnect -> idToken: ', idToken)
-
-    const mariaDB = getMariaDB()
-
-    // Future: Might need to fetch multiple once we create new entries with the same custom_claim_id
-    const entity = await mariaDB.fetchOptional<Entity | null>(
-      `
-      SELECT
-        id,
-        resource_link_id,
-        custom_claim_id,
-        content
-      FROM
-        lti_entity
-      WHERE
-        custom_claim_id = ?
-    `,
-      [String(customId)]
-    )
-
-    if (!entity) {
-      res.send('<div>Dieser Inhalt wurde nicht gefunden.</div>')
-      return
-    }
-
-    // https://www.imsglobal.org/spec/lti/v1p3#lis-vocabulary-for-context-roles
-    // Example roles claim from itslearning
-    // "https://purl.imsglobal.org/spec/lti/claim/roles":[
-    //   0:"http://purl.imsglobal.org/vocab/lis/v2/institution/person#Staff"
-    //   1:"http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor"
-    // ]
-    const rolesWithWriteAccess = [
-      'membership#Administrator',
-      'membership#ContentDeveloper',
-      'membership#Instructor',
-      'membership#Mentor',
-      'membership#Manager',
-      'membership#Officer',
-      // This role is sent in the itslearning library and we disallow editing there for now
-      // 'membership#Member',
-    ]
-    // @ts-expect-error @types/ltijs
-    const courseMembershipRole = idToken.platformContext.roles?.find((role) =>
-      role.includes('membership#')
-    )
-    const editorMode =
-      courseMembershipRole &&
-      rolesWithWriteAccess.some((roleWithWriteAccess) =>
-        courseMembershipRole.includes(roleWithWriteAccess)
-      )
-        ? 'write'
-        : 'read'
-
-    const accessToken = createAccessToken(editorMode, entity.id, ltijsKey)
-
-    if (!entity.resource_link_id) {
-      // Set resource_link_id in database
-      await mariaDB.mutate(
-        'UPDATE lti_entity SET resource_link_id = ? WHERE id = ?',
-        [resourceLinkId, entity.id]
-      )
-    }
-
-    const searchParams = new URLSearchParams()
-    searchParams.append('accessToken', accessToken)
-    searchParams.append('resourceLinkId', resourceLinkId)
-    searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
-
-    return ltijs.redirect(res, `/app?${searchParams}`)
-  }
+  ltijs.onConnect(editor.onConnect)
 
   // Successful LTI deep linking launch
   // @ts-expect-error @types/ltijs
-  ltijs.onDeepLinking(async (idToken, __, res) => {
-    const mariaDB = getMariaDB()
+  ltijs.onDeepLinking(async (idToken, req, res) => {
+    const isMoodle = idToken.iss.includes('moodle')
 
-    const ltiCustomClaimId = uuid_v4()
-
-    // Create new entity in database
-    const { insertId: entityId } = await mariaDB.mutate(
-      'INSERT INTO lti_entity (custom_claim_id, id_token_on_creation) values (?, ?)',
-      [ltiCustomClaimId, JSON.stringify(idToken)]
-    )
-
-    console.log('entityId: ', entityId)
-
-    const url = new URL(urlJoin(config.EDITOR_URL, '/lti/launch'))
-
-    // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
-    const items = [
-      {
-        type: 'ltiResourceLink',
-        url: url.href,
-        title: `Serlo Editor Content`,
-        text: 'Placeholder description',
-        // icon:
-        // thumbnail:
-        // window:
-        // iframe: {
-        //   width: 400,
-        //   height: 300,
-        // },
-        custom: {
-          // Important: Only use lowercase letters in key. When I used uppercase letters they were changed to lowercase letters in the LTI Resource Link launch.
-          id: ltiCustomClaimId,
-        },
-        // lineItem:
-        // available:
-        // submission:
-
-        // Custom properties
-        // presentation: {
-        //   documentTarget: "iframe",
-        // },
-      },
-    ]
-
-    // Creates the deep linking request form
-    const form = await ltijs.DeepLinking.createDeepLinkingForm(
-      idToken,
-      items,
-      {}
-    )
-
-    return res.send(form)
+    // On Moodle the UX improves if we show a selection to the user. Even though there is only one option. Everywhere else we directly return without showing the selection.
+    if (isMoodle) {
+      await editor.selectContentType(idToken, req, res)
+    } else {
+      await editor.deeplinkingDone(req, res)
+    }
   })
 
   await ltijs.deploy()

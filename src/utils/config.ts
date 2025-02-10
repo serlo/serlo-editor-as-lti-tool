@@ -23,10 +23,8 @@ const BaseEnv = {
   S3_ENDPOINT: NonEmptyString,
   BUCKET_NAME: NonEmptyString,
   BUCKET_REGION: NonEmptyString,
-  // fallback to '' for now so it does not fail in CI
-  BUCKET_ACCESS_KEY_ID: t.string,
-  // fallback to '' for now so it does not fail in CI
-  BUCKET_SECRET_ACCESS_KEY: t.string,
+  BUCKET_ACCESS_KEY_ID: NonEmptyString,
+  BUCKET_SECRET_ACCESS_KEY: NonEmptyString,
   MEDIA_BASE_URL: NonEmptyString,
 }
 
@@ -38,6 +36,12 @@ const LocalEnvType = t.type({
 const DevelopmentEnvType = t.type({
   ...BaseEnv,
   ENVIRONMENT: t.literal('development'),
+  MOODLE_NAME: NonEmptyString,
+  MOODLE_URL: NonEmptyString,
+  MOODLE_AUTHENTICATION_ENDPOINT: NonEmptyString,
+  MOODLE_ACCESS_TOKEN_ENDPOINT: NonEmptyString,
+  MOODLE_KEYSET_ENDPOINT: NonEmptyString,
+  SERLO_EDITOR_CLIENT_ID_ON_MOODLE: NonEmptyString,
 })
 
 const StagingEnvType = t.type({
@@ -59,6 +63,8 @@ const StagingEnvType = t.type({
   EDUSHARING_RLP_LAUNCH_ENDPOINT: NonEmptyString,
   EDUSHARING_RLP_DETAILS_ENDPOINT: NonEmptyString,
   EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR: NonEmptyString,
+  // currently only for staging, in the future also or only for production
+  OPENAI_API_KEY: NonEmptyString,
 })
 
 const ProductionEnvType = t.type({

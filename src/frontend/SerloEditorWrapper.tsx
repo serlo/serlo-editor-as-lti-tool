@@ -5,7 +5,7 @@ import {
   type SerloEditorProps,
 } from '@serlo/editor'
 import { jwtDecode } from 'jwt-decode'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef } from 'react'
 
 interface SerloContentProps {
   initialState: SerloEditorProps['initialState']
@@ -33,19 +33,13 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   const testingSecret = urlParams.get('testingSecret')
   const accessToken = urlParams.get('accessToken')
 
-  const [editorState, setEditorState] = useState<string>(
-    JSON.stringify(props.initialState)
-  )
-  const [savePending, setSavePending] = useState<boolean>(false)
+  const savePendingRef = useRef<boolean>(false)
 
-  const editorStateRef = useRef(editorState)
+  const saveTimeoutRef = useRef<number | undefined>(undefined)
 
-  // Save content if there are unsaved changed
-  useEffect(() => {
-    if (!savePending) return
-
-    setTimeout(saveContent, 1000)
-    function saveContent() {
+  const save = useCallback(
+    (newState: unknown) => {
+      savePendingRef.current = false
       fetch('/entity', {
         method: 'PUT',
         headers: {
@@ -54,75 +48,58 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
         },
         body: JSON.stringify({
           accessToken,
-          editorState: editorStateRef.current,
+          editorState: newState,
         }),
       }).then((res) => {
         if (res.status === 200) {
-          setSavePending(false)
+          // TODO: Show user content was saved successfully
         } else {
           // TODO: Handle failure
         }
       })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [savePending])
+    },
+    [accessToken, ltik]
+  )
+
+  const handleOnChange = useCallback(
+    (newState: unknown) => {
+      // If save already scheduled, cancel it
+      if (savePendingRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+      savePendingRef.current = true
+      saveTimeoutRef.current = window.setTimeout(() => save(newState), 500)
+    },
+    [save]
+  )
 
   const plugins = getPlugins(ltik)
   function getPlugins(ltik: string) {
     const { platformUrl } = jwtDecode(ltik) as Ltik
     const onEdusharing = platformUrl.includes('edu-sharing')
-    if (!onEdusharing) {
-      return defaultPlugins
-    }
-
-    // Customize available plugins when launched by edu-sharing
-    const origin = window.location.origin
-    const isDevEnv =
-      origin.includes('editor.serlo.dev') || origin.includes('localhost')
-    if (isDevEnv) {
+    if (onEdusharing) {
       return [
         ...defaultPlugins,
         EditorPluginType.EdusharingAsset,
         EditorPluginType.SerloInjection,
       ]
-    } else {
-      return [
-        ...defaultPlugins.filter(
-          (plugin) =>
-            plugin !== EditorPluginType.Image &&
-            plugin !== EditorPluginType.DropzoneImage &&
-            plugin !== EditorPluginType.ImageGallery &&
-            plugin !== EditorPluginType.Video
-        ),
-        EditorPluginType.EdusharingAsset,
-        EditorPluginType.SerloInjection,
-      ]
     }
+
+    return defaultPlugins
   }
 
   return (
-    <div
-      style={{ padding: '3rem', backgroundColor: 'white', minWidth: '600px' }}
+    <MemoSerloEditor
+      initialState={initialState}
+      onChange={handleOnChange}
+      editorVariant="lti-tool"
+      _testingSecret={testingSecret}
+      plugins={plugins}
+      _ltik={ltik}
     >
-      {/* <div style={{ color: 'grey' }}>
-        {savePending ? 'Ungespeicherte Änderungen' : 'Gespeichert'}
-      </div> */}
-      <MemoSerloEditor
-        initialState={initialState}
-        onChange={(newState) => {
-          editorStateRef.current = JSON.stringify(newState)
-          setEditorState(editorStateRef.current)
-          setSavePending(true)
-        }}
-        editorVariant="lti-tool"
-        _testingSecret={testingSecret}
-        plugins={plugins}
-        _ltik={ltik}
-      >
-        {(editor) => {
-          return <>{editor.element}</>
-        }}
-      </MemoSerloEditor>
-    </div>
+      {(editor) => {
+        return <>{editor.element}</>
+      }}
+    </MemoSerloEditor>
   )
 }
