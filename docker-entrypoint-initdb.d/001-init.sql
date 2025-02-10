@@ -33,14 +33,18 @@ DROP TABLE IF EXISTS `lti_entity`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `lti_entity` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `resource_link_id` varchar(255) DEFAULT NULL,
+  `iss` varchar(255) NOT NULL,
+  `resource_link_id` varchar(255) NOT NULL,
   `custom_claim_id` varchar(255) DEFAULT NULL,
   `edusharing_node_id` varchar(255) DEFAULT NULL,
   `content` longtext DEFAULT NULL,
-  `id_token_on_creation` text NOT NULL,
+  `user_when_first_opened` varchar(255) NOT NULL,
+  `id_token_when_first_opened` text NOT NULL,
+  `id_token_when_created` text DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_lti_entity_custom_claim_id` (`custom_claim_id`),
-  KEY `idx_lti_entity_edusharing_node_id` (`edusharing_node_id`)
+  KEY `idx_lti_entity_edusharing_node_id` (`edusharing_node_id`),
+  KEY `idx_lti_entity_iss` (`iss`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -50,8 +54,6 @@ CREATE TABLE `lti_entity` (
 
 LOCK TABLES `lti_entity` WRITE;
 /*!40000 ALTER TABLE `lti_entity` DISABLE KEYS */;
-INSERT INTO `lti_entity` VALUES
-(1,NULL,'00000000-0000-0000-0000-000000000000',NULL,NULL,'{}');
 /*!40000 ALTER TABLE `lti_entity` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -64,4 +66,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-25  1:49:38
+-- Dump completed on 2025-02-06 13:07:18
