@@ -9325,6 +9325,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"get-value@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "get-value@npm:3.0.1"
+  dependencies:
+    isobject: "npm:^3.0.1"
+  checksum: 10/3ba777d33448181d8b6c21ce11f31194257119d32dbd632b27db6e3f27fe78100405b4dd93137eea9f4aa2d0a9c623b13747d728d472a7ca6cb93046c3f521a1
+  languageName: node
+  linkType: hard
+
 "git-hooks-list@npm:^3.0.0":
   version: 3.1.0
   resolution: "git-hooks-list@npm:3.1.0"
@@ -11483,9 +11492,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ltijs@npm:5.9.5":
-  version: 5.9.5
-  resolution: "ltijs@npm:5.9.5"
+"ltijs@npm:5.9.6":
+  version: 5.9.6
+  resolution: "ltijs@npm:5.9.6"
   dependencies:
     "@babel/runtime": "npm:^7.24.4"
     body-parser: "npm:^1.20.2"
@@ -11497,10 +11506,11 @@ __metadata:
     got: "npm:^11.8.2"
     helmet: "npm:^6.0.1"
     jsonwebtoken: "npm:^9.0.2"
-    mongoose: "npm:^7.6.10"
+    mongoose: "npm:^7.8.3"
     parse-link-header: "npm:^2.0.0"
     rasha: "npm:^1.2.5"
-  checksum: 10/1ffdcca8ee185519e27710ad422c573c8d5767b523c2ca7a0aed967487134859f06a19d9646ffc00a187d811cd72fd69efd427d353118e8ff8b81a1a603960fe
+    sprightly: "npm:^2.0.1"
+  checksum: 10/83f10bd38cc2b2ba22c7387ef55ad97590fa889804c93cc7627870b75ac81d49dc877c9ade3a4c73d2028f96ae8600f2fec3e44e42aa34e5879827aa62013bbc
   languageName: node
   linkType: hard
 
@@ -12238,7 +12248,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongoose@npm:^7.6.10":
+"mongoose@npm:^7.8.3":
   version: 7.8.6
   resolution: "mongoose@npm:7.8.6"
   dependencies:
@@ -14808,7 +14818,7 @@ __metadata:
     jwks-rsa: "npm:^3.1.0"
     jwt-decode: "npm:4.0.0"
     lodash: "npm:^4.17.21"
-    ltijs: "npm:5.9.5"
+    ltijs: "npm:5.9.6"
     mongodb: "npm:5.1.0"
     multer: "npm:^1.4.5-lts.1"
     mysql2: "npm:^3.12.0"
@@ -15199,6 +15209,15 @@ __metadata:
   version: 3.0.18
   resolution: "spdx-license-ids@npm:3.0.18"
   checksum: 10/45fdbb50c4bbe364720ef0acd19f4fc1914d73ba1e2b1ce9db21ee12d7f9e8bf14336289f6ad3d5acac3dc5b91aafe61e9c652d5806b31cbb8518a14979a16ff
+  languageName: node
+  linkType: hard
+
+"sprightly@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "sprightly@npm:2.0.1"
+  dependencies:
+    get-value: "npm:^3.0.1"
+  checksum: 10/50b77101979df58496e1c7b14c75add3cd56c6beffa35c622188144ebadec02fa52a4f25b37226b5e82fd58aa2979feeaacedcc52cc20055eaa928cc4fb6b4c7
   languageName: node
   linkType: hard
 
