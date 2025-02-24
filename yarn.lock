@@ -13777,7 +13777,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.4.47, postcss@npm:^8.5.1":
+"postcss@npm:^8.4.47":
   version: 8.5.1
   resolution: "postcss@npm:8.5.1"
   dependencies:
@@ -13788,7 +13788,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.5.2":
+"postcss@npm:^8.5.2, postcss@npm:^8.5.3":
   version: 8.5.3
   resolution: "postcss@npm:8.5.3"
   dependencies:
@@ -15138,7 +15138,7 @@ __metadata:
     npm-run-all: "npm:^4.1.5"
     openai: "npm:^4.77.0"
     playwright: "npm:^1.50.0"
-    postcss: "npm:^8.5.1"
+    postcss: "npm:^8.5.3"
     prettier: "npm:3.4.2"
     prettier-plugin-packagejson: "npm:^2.5.8"
     react: "npm:^18.3.1"
