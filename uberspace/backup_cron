@@ -1,4 +1,4 @@
-# Disable sending all cronjob results, send only errors
+# Send email only on error during cronjob
 # https://manual.uberspace.de/daemons-cron/#mails
 MAILTO=""
 
