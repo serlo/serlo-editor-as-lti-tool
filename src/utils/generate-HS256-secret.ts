@@ -9,7 +9,7 @@ async function generateNewHS256Secret() {
 
   const envContent = await readFile('.env', { encoding: 'utf-8' })
 
-  const regex = /LTIJS_KEY=.*\s/
+  const regex = /LTIJS_KEY=.*\s/g
 
   const newEnvContent = envContent.replaceAll(
     regex,
