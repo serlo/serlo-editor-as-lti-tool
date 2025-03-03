@@ -28,7 +28,7 @@
     "wait-for-server": "./scripts/wait_for_server.sh"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.750.0",
+    "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/s3-request-presigner": "^3.750.0",
     "@dotenvx/dotenvx": "^1.36.0",
     "@paralleldrive/cuid2": "^2.2.2",
