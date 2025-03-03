@@ -69,7 +69,7 @@
     "codeceptjs-chai": "^2.3.5",
     "esbuild": "^0.24.0",
     "eslint": "^9.18.0",
-    "eslint-plugin-react": "^7.37.3",
+    "eslint-plugin-react": "^7.37.4",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.12.0",
