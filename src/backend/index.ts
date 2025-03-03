@@ -33,6 +33,7 @@ export interface Entity {
 
 const setup = async () => {
   ltijs.setup(
+    // This needs to be random 256 bits encoded as a base64 string
     ltijsKey,
     {
       url: config.MONGODB_URI,
