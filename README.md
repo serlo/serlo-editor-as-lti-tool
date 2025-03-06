@@ -7,14 +7,16 @@ Requirements:
 - Docker 24.0.0 or later
 - Node LTS
 
-1. Create a copy of `.env.template` as `.env`
-2. (optional) Add secret values to `.env`
-3. `yarn` to install dependencies
-4. `yarn dev` to start the databases and the express backend & build the
-   frontend
+1. `yarn` to install dependencies
+2. Create a copy of `.env.template` as `.env`
+3. `yarn generate-secret` to generate a `LTIJS_KEY` in .env
+4. Add missing secret values in `.env`
+5. `yarn dev` to start the LTI tool
 
-Now, the editor is running locally. On code changes the express server will
+Now, the LTI tool is running locally. On code changes the express server will
 restart and the frontend will be rebuilt.
+
+6. Launch the LTI tool using either Saltire or the LMS mocks
 
 ## Launch through Saltire
 
@@ -27,7 +29,7 @@ restart and the frontend will be rebuilt.
    flow of opening an existing Serlo Editor element as Learner (non-editable).
 2. Click "Connect"
 
-## Launch through mocked services
+## Launch through LMS mocks
 
 1. `yarn dev-mocks` to start the edu-sharing/itslearning mocks
 2. Open `http://localhost:8100` (edu-sharing) or `http://localhost:8101`
