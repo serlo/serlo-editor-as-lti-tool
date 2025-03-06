@@ -41,12 +41,12 @@ jobs:
       BUCKET_ACCESS_KEY_ID: ${{ secrets.BUCKET_ACCESS_KEY_ID }}
       BUCKET_SECRET_ACCESS_KEY: ${{ secrets.BUCKET_SECRET_ACCESS_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      LTIJS_KEY: ${{ secrets.LTIJS_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node
       - run: cp .env.template .env
       - run: yarn install
-      - run: yarn generate-secret
       - run: yarn build
       - run: yarn dev:databases -d
       - run: yarn start > output.log 2>&1 &
