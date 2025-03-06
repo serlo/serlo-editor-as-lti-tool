@@ -8,7 +8,7 @@ generateSecretKey()
 async function generateSecretKey() {
   // eslint-disable-next-line no-console
   console.log(
-    'Warning: This will reset mongodb and invalidate all current user sessions. Continue?'
+    'Warning: This will reset mongodb database `lti` and invalidate all current user sessions. Continue?'
   )
 
   const rl = readline.createInterface({
@@ -48,7 +48,7 @@ async function generateSecretKey() {
   // Drop Mongodb database
   try {
     execSync(
-      `mongosh --eval 'use test' --eval 'db.dropDatabase()' ${process.env.MONGODB_URI}`,
+      `mongosh --eval 'use lti' --eval 'db.dropDatabase()' ${process.env.MONGODB_URI}`,
       { timeout: timeoutInMilliseconds }
     )
   } catch (error) {
