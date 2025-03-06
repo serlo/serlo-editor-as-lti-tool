@@ -60,5 +60,7 @@ async function generateSecretKey() {
   // eslint-disable-next-line no-console
   console.log('Added new secret key to .env file and dropped MongoDB database.')
   // eslint-disable-next-line no-console
-  console.log('Important: Restart the service now to use the new secret key.')
+  console.log(
+    'Important: Restart the service now to use the new secret key and save the new .env file to the bucket.'
+  )
 }
