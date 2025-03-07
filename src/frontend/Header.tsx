@@ -14,7 +14,7 @@ export default function Header() {
             onClick={() => history.go(-1)}
             className="text-sky-600 text-sm cursor-pointer"
           >
-            <span className="rotate-180 inline-block">⮕</span> Zurück zu Moodle
+            <span className="rotate-180 inline-block">⮕</span> Zurück
           </a>{' '}
           {/* {contextTitle ? (
             <span className="text-sm text-gray-500">
