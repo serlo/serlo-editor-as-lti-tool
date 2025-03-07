@@ -77,14 +77,9 @@ if ! $(uberspace web backend list | grep -q 'http:3000 => OK, listening'); then
 fi
 echo 'Backend app opened to the internet'
 
-# TODO: still needed?
-# Only on 'production' environment
-# if [ "$USER" = "edtr" ]; then
-#   # IMPORTANT: This completely overwrites existing cronjob entries!
-#   crontab ~/serlo-editor-as-lti-tool/uberspace/backup_cron
-#   echo 'Added cronjob for database backups'
-
-#   echo 'Available buckets:'
-#   s3cmd ls
-#   echo 'Create bucket serlo-test-database-backup manually if it does not appear here.'
-# fi
+# Setup automatic backups only on 'production' environment
+if [ "$USER" = "edtrprod" ]; then
+  # IMPORTANT: This completely overwrites existing cronjob entries!
+  crontab ~/serlo-editor-as-lti-tool/uberspace/backup_cron
+  echo 'Added cronjob for database backups'
+fi
