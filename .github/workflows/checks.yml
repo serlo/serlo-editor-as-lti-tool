@@ -45,6 +45,11 @@ jobs:
       - run: yarn build
       - run: yarn dev:databases -d
       - run: yarn start > output.log 2>&1 &
+        env:
+          BUCKET_ACCESS_KEY_ID: foobar
+          BUCKET_SECRET_ACCESS_KEY: foobar
+          OPENAI_API_KEY: foobar
+          LTIJS_KEY: foobar
       - run: yarn playwright install
       - run: yarn wait-for-server
       - run: HEADLESS=true yarn test
