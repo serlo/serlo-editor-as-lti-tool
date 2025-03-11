@@ -38,9 +38,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      BUCKET_ACCESS_KEY_ID: foobar
-      BUCKET_SECRET_ACCESS_KEY: foobar
-      OPENAI_API_KEY: foobar
+      BUCKET_ACCESS_KEY_ID: ${{ secrets.BUCKET_ACCESS_KEY_ID }}
+      BUCKET_SECRET_ACCESS_KEY: ${{ secrets.BUCKET_SECRET_ACCESS_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       LTIJS_KEY: foobar
     steps:
       - uses: actions/checkout@v4
