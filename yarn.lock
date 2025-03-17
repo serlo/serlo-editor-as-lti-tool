@@ -12867,9 +12867,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:^4.77.0":
-  version: 4.77.0
-  resolution: "openai@npm:4.77.0"
+"openai@npm:^4.87.3":
+  version: 4.87.3
+  resolution: "openai@npm:4.87.3"
   dependencies:
     "@types/node": "npm:^18.11.18"
     "@types/node-fetch": "npm:^2.6.4"
@@ -12879,13 +12879,16 @@ __metadata:
     formdata-node: "npm:^4.3.2"
     node-fetch: "npm:^2.6.7"
   peerDependencies:
+    ws: ^8.18.0
     zod: ^3.23.8
   peerDependenciesMeta:
+    ws:
+      optional: true
     zod:
       optional: true
   bin:
     openai: bin/cli
-  checksum: 10/51ef7522d3c3589401b9bb0d49a3bd9df2a84648b996b3452dd4bae99c8e6b27d63a415c41847900954197051b5598de85a76f12c6b2deab33d8d70ceab5d7c3
+  checksum: 10/bffe52dc4cc49a4537fb88e7101ea6d043294819f1e2d540bcad1dadbff1a44d963912541fe8b212fd93b12f1fe6a082265bb5043fa9ab25896268449d4edcb6
   languageName: node
   linkType: hard
 
@@ -14776,7 +14779,7 @@ __metadata:
     multer: "npm:^1.4.5-lts.1"
     mysql2: "npm:^3.12.0"
     npm-run-all: "npm:^4.1.5"
-    openai: "npm:^4.77.0"
+    openai: "npm:^4.87.3"
     playwright: "npm:^1.50.0"
     postcss: "npm:^8.5.3"
     prettier: "npm:3.5.3"
