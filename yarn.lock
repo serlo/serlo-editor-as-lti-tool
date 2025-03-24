@@ -564,9 +564,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/s3-request-presigner@npm:^3.758.0":
-  version: 3.758.0
-  resolution: "@aws-sdk/s3-request-presigner@npm:3.758.0"
+"@aws-sdk/s3-request-presigner@npm:^3.772.0":
+  version: 3.772.0
+  resolution: "@aws-sdk/s3-request-presigner@npm:3.772.0"
   dependencies:
     "@aws-sdk/signature-v4-multi-region": "npm:3.758.0"
     "@aws-sdk/types": "npm:3.734.0"
@@ -576,7 +576,7 @@ __metadata:
     "@smithy/smithy-client": "npm:^4.1.6"
     "@smithy/types": "npm:^4.1.0"
     tslib: "npm:^2.6.2"
-  checksum: 10/a338ce47c647dcb155c0658f795b4e0f948d22f582a8e288b3fee25e82d62f2491fa64199f84ef190da34877c169242a32f5f7cc04331b625ed755eca0780953
+  checksum: 10/de9eab4e9ece58a0786326a81f84a7a361bc6167e637772f7623feb6ef444643836e2eeb2199cbb3eb5028f959104fce33326d2a8fb8f669ab04695330afe343
   languageName: node
   linkType: hard
 
@@ -14443,7 +14443,7 @@ __metadata:
   resolution: "serlo-editor-lti-tool@workspace:."
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.758.0"
-    "@aws-sdk/s3-request-presigner": "npm:^3.758.0"
+    "@aws-sdk/s3-request-presigner": "npm:^3.772.0"
     "@dotenvx/dotenvx": "npm:^1.38.5"
     "@eslint/compat": "npm:^1.2.5"
     "@eslint/js": "npm:^9.14.0"
