@@ -236,9 +236,7 @@ export class EdusharingServer {
 
         const embedType = req.query['embed-type']
 
-        const decodedJwt = await jose.decodeJwt(idToken)
-
-        const idTokenDecoded = decodedJwt.payload
+        const idTokenDecoded = jose.decodeJwt(idToken)
         const idTokenType = t.type({
           'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings':
             t.type({
@@ -320,7 +318,7 @@ export class EdusharingServer {
       )
         return
 
-      const idToken = req.query.id_token
+      const idToken = req.body.id_token
       if (typeof idToken !== 'string') {
         res.status(400).send('id_token is undefined')
         return
