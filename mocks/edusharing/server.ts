@@ -236,17 +236,9 @@ export class EdusharingServer {
 
         const embedType = req.query['embed-type']
 
-        const serloEditorJwks = jose.createRemoteJWKSet(
-          new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
-        )
+        const decodedJwt = await jose.decodeJwt(idToken)
 
-        const verifyResult = await jose.jwtVerify(idToken, serloEditorJwks, {
-          audience: edusharingMockClientId,
-          issuer: editorUrl,
-          subject: this.user,
-        })
-
-        const idTokenDecoded = verifyResult.payload
+        const idTokenDecoded = decodedJwt.payload
         const idTokenType = t.type({
           'https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings':
             t.type({
@@ -327,9 +319,24 @@ export class EdusharingServer {
         })
       )
         return
+
+      const idToken = req.query.id_token
+      if (typeof idToken !== 'string') {
+        res.status(400).send('id_token is undefined')
+        return
+      }
+
+      const serloEditorJwks = jose.createRemoteJWKSet(
+        new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
+      )
+
+      await jose.jwtVerify(idToken, serloEditorJwks, {
+        audience: edusharingMockClientId,
+        issuer: editorUrl,
+        subject: this.user,
+      })
+
       const embedTypes = ['image', 'word']
-      const searchParams = new URLSearchParams()
-      searchParams.append('id_token', req.body.id_token)
 
       res.setHeader('Content-Type', 'text/html')
       res.send(
