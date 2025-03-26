@@ -1,8 +1,9 @@
 import { SerloEditorProps, SerloRendererProps } from '@serlo/editor'
 import { useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { type AccessToken, type Entity } from '../../backend'
 import copyPluginToClipboardImage from '../assets/copy-plugin-to-clipboard.png'
+import type { AccessToken } from '../../backend/types/access-token'
+import type { Entity } from '../../backend/types/entity'
 
 export type AppState =
   | { type: 'fetching-content' }

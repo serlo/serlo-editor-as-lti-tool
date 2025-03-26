@@ -12,29 +12,10 @@ import * as ai from './ai-route-handlers'
 import * as media from './media-route-handlers'
 import { logger } from '../utils/logger'
 
-const ltijsKey = config.LTIJS_KEY
-
-export interface AccessToken {
-  entityId: string
-  accessRight: 'read' | 'write'
-}
-
-export interface Entity {
-  id: number
-  iss: string
-  resource_link_id?: string
-  custom_claim_id?: string
-  edusharing_node_id?: string
-  content: string
-  user_when_first_opened: string
-  id_token_when_first_opened: string
-  id_token_when_created?: string
-}
-
-const setup = async () => {
+async function setup() {
   ltijs.setup(
     // This needs to be random 256 bits encoded as a base64 string
-    ltijsKey,
+    config.LTIJS_KEY,
     {
       url: config.MONGODB_URI,
       // @ts-expect-error @types/ltijs
@@ -49,10 +30,12 @@ const setup = async () => {
       dynRegRoute: '/lti/register',
       staticPath: path.join(__dirname, './../../dist/frontend'), // Path to static files
       cookies: {
-        secure: config.ENVIRONMENT !== 'local', // Set secure to true if the testing platform is in a different domain and https is being used
-        sameSite: config.ENVIRONMENT === 'local' ? '' : 'None', // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
+        // Set secure to true if the testing platform is in a different domain and https is being used
+        secure: config.ENVIRONMENT !== 'local',
+        // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
+        sameSite: config.ENVIRONMENT === 'local' ? '' : 'None',
       },
-      // Disables cookie verification. Temporary hack to make it work if third-party cookies are blocked. Later, use newer ltijs version that should solve this without requiring devMode.
+      // Enable dev mode in dev environments
       devMode:
         config.ENVIRONMENT === 'local' ||
         config.ENVIRONMENT === 'development' ||
@@ -95,33 +78,38 @@ const setup = async () => {
     next()
   })
 
-  // Opens Serlo editor
+  // Open Serlo editor
   app.get('/app', editor.app)
 
+  // Return LTI Deep Linking Response to platform
   app.get('/deeplinking-done', editor.deeplinkingDone)
 
-  // Endpoint to get content
+  // Get content json
   app.get('/entity', editor.getEntity)
 
-  // Endpoint to save content
+  // Save content json
   app.put('/entity', editor.putEntity)
 
-  // Provide endpoint to start embed flow on edu-sharing
+  // Start edu-sharing embed flow for embedding edu-sharing content into the editor
   // Called when user clicks on "embed content from edusharing"
   app.get('/edusharing-embed/start', edusharing.start)
 
+  // Login during edu-sharing embed flow
   // Receives an Authentication Request in payload
   // See: https://www.imsglobal.org/spec/security/v1p0/#step-2-authentication-request
   app.get('/edusharing-embed/login', edusharing.login)
 
+  // Keys during edu-sharing embed flow
   app.use('/edusharing-embed/keys', edusharing.keys)
 
+  // Finish edu-sharing embed flow
   // Called after the resource selection on Edusharing (within iframe) when user selected what resource to embed.
   // Receives a LTI Deep Linking Response Message in payload. Contains content_items array that specifies which resource should be embedded.
   // See: https://www.imsglobal.org/spec/lti-dl/v2p0#deep-linking-response-message
   // See https://www.imsglobal.org/spec/lti-dl/v2p0#deep-linking-response-example for an example response payload
   app.post('/edusharing-embed/done', edusharing.done)
 
+  // Get edu-sharing embed html snippet
   app.get('/edusharing-embed/get', edusharing.get)
 
   app.get('/media/presigned-url', media.presignedUrl)
@@ -138,16 +126,7 @@ const setup = async () => {
 
   // Successful LTI deep linking launch
   // @ts-expect-error @types/ltijs
-  ltijs.onDeepLinking(async (idToken, req, res) => {
-    const isMoodle = idToken.iss.includes('moodle')
-
-    // On Moodle the UX improves if we show a selection to the user. Even though there is only one option. Everywhere else we directly return without showing the selection.
-    if (isMoodle) {
-      await editor.selectContentType(idToken, req, res)
-    } else {
-      await editor.deeplinkingDone(req, res)
-    }
-  })
+  ltijs.onDeepLinking(editor.onDeepLinking)
 
   await ltijs.deploy()
 

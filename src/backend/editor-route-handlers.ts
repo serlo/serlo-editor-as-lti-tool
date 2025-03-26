@@ -2,7 +2,6 @@ import { Request, Response } from 'express'
 
 import jwt from 'jsonwebtoken'
 import path from 'path'
-import { AccessToken, Entity } from '.'
 import { getMariaDB } from './mariadb'
 import config from '../utils/config'
 import { logger } from '../utils/logger'
@@ -15,6 +14,8 @@ import { LtiCustomClaim } from './types/lti-custom-claim'
 import { errorMessageToUser } from './error-message-to-user'
 import * as t from 'io-ts'
 import { createAccessToken } from './util/create-acccess-token'
+import type { AccessToken } from './types/access-token'
+import type { Entity } from './types/entity'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -175,6 +176,21 @@ export async function onConnect(idToken: IdToken, _: Request, res: Response) {
 
   // Open editor
   return ltijs.redirect(res, `/app?${searchParams.toString()}`)
+}
+
+export async function onDeepLinking(
+  idToken: IdToken,
+  req: Request,
+  res: Response
+) {
+  const isMoodle = idToken.iss.includes('moodle')
+
+  // On Moodle the UX improves if we show a selection to the user. Even though there is only one option. Everywhere else we directly return without showing the selection.
+  if (isMoodle) {
+    await selectContentType(idToken, req, res)
+  } else {
+    await deeplinkingDone(req, res)
+  }
 }
 
 function isCustomValid(custom: unknown, isEdusharing: boolean) {
