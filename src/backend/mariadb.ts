@@ -6,9 +6,9 @@ import {
   createPool,
 } from 'mysql2/promise'
 import config from '../utils/config'
-import { type Entity } from '.'
 import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
+import type { Entity } from './types/entity'
 
 let database: Database | null = null
 

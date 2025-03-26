@@ -4629,12 +4629,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ltijs@npm:4.0.11":
-  version: 4.0.11
-  resolution: "@types/ltijs@npm:4.0.11"
+"@types/ltijs@npm:4.0.12":
+  version: 4.0.12
+  resolution: "@types/ltijs@npm:4.0.12"
   dependencies:
     "@types/express": "npm:*"
-  checksum: 10/4b0c659d15aaee780d731d221f13fea4d4910457eb8b974a2320c00d96d5796520d6ef7b54255fbf30e74033435e16d28f4d23010c1d390a593c4cf0926af322
+  checksum: 10/4dfc180fadd63cc3fa827ef288bccdd986c8795e95928508a1927a8658c1d91f0ca688656a55109654847d89f43cedad024b025b1ca577f8879dbb0cd9547667
   languageName: node
   linkType: hard
 
@@ -14452,7 +14452,7 @@ __metadata:
     "@serlo/editor": "npm:0.22.2"
     "@types/jsonwebtoken": "npm:9.0.8"
     "@types/lodash": "npm:^4"
-    "@types/ltijs": "npm:4.0.11"
+    "@types/ltijs": "npm:4.0.12"
     "@types/multer": "npm:^1"
     "@types/node": "npm:^22.9.0"
     "@types/react": "npm:^18.3.12"

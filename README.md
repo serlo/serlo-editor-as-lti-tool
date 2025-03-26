@@ -1,11 +1,14 @@
 Serlo editor as LTI tool
 
+Allows integrating the Serlo Editor into various learning management systems
+like Moodle, itslearning, edu-sharing, ...
+
 # Local dev setup
 
 Requirements:
 
 - Docker 24.0.0 or later
-- Node LTS
+- Node 20.14.0 or later
 
 1. `yarn` to install dependencies
 2. Create a copy of `.env.template` as `.env`
@@ -35,37 +38,42 @@ restart and the frontend will be rebuilt.
 2. Open `http://localhost:8100` (edu-sharing) or `http://localhost:8101`
    (itslearning)
 
-# Technical details
+# Project structure
 
-LTI launch is handled by [ltijs](https://github.com/Cvmcosta/ltijs/).
+`src/backend` contains the Express server built on top of
+[ltijs](https://github.com/Cvmcosta/ltijs/)
 
-ltijs sets up an express server.
+`src/frontend` contains the React frontend bundled with Vite and provided in
+express through the `/app` route
 
-React frontend is bundled with Vite and then provided by the `/app` route in
-express.
+`mocks` contains mocks for edu-sharing and itslearning that can launch the lti
+tool in local development
 
-On a successful LTI launch the server returns a signed `accessToken` jwt that
-the client can then later use to authenticate saving content.
+`e2e` contains end-to-end tests
+
+`uberspace` contains scripts and configuration files for setting up a deployment
+on Uberspace
 
 # Type Checking of Environment Variables
 
 If you need to add a new mandatory environment variable in the `.env` file, add
-a type checking at `src/utils/config.ts`.
+it to `src/utils/config.ts`.
 
-# Management of .env files of deployment environments
+# .env files in deployments
 
-The easiest way to update the `.env` of the development, staging and production
-environments is to do it directly in them.
+The .env files on Uberspace contain secrets and are stored separately in an S3
+bucket.
 
-1. Ssh into the environment, v.g. `ssh edtrdev@editor.serlo.dev` if you need to
+Making changes:
+
+1. SSH into the environment, v.g. `ssh edtrdev@editor.serlo.dev` if you need to
    change the development environment.
 2. `cd ~/serlo-editor-as-lti-tool`
-3. Modify the `.env` file, testing it accordingly if possible. Remember to
-   restart the serlo-app service `supervisorctl restart serlo-app` in order that
-   the changes take place.
-4. Upload the file to the bucket v.g. `s3cmd put .env s3://edtr-env/$USER/.env`.
-   That way you will not only backup it but also guarantee that in the next
-   deployment the file in the bucket will be used.
+3. Modify the `.env` file.
+4. Restart the serlo-app service `supervisorctl restart serlo-app` so that the
+   new .env values are used.
+5. Test if everything works
+6. Upload the file to the bucket v.g. `s3cmd put .env s3://edtr-env/$USER/.env`.
 
 If you prefer or need to do the changes in your local machine, you have two
 options:
@@ -75,7 +83,7 @@ A. UI: If you have the permissions, you can login into IONOS and manage the
 
 B. CLI:
 
-1. Ask the admin to include you into the IONOS contract and update to policy of
+1. Ask an admin to include you into the IONOS contract and update to policy of
    the corresponding bucket. Alternatively, you can use the credentials of the
    dev or admin user.
 2. Install a S3 client CLI (we recommend `s3cmd`,
