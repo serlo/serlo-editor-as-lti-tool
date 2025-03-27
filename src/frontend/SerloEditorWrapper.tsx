@@ -6,7 +6,6 @@ import {
 } from '@serlo/editor'
 import { jwtDecode } from 'jwt-decode'
 import React, { useCallback, useRef } from 'react'
-import config from '../utils/config'
 
 interface SerloContentProps {
   initialState: SerloEditorProps['initialState']
@@ -97,7 +96,7 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
       _testingSecret={testingSecret}
       plugins={plugins}
       _ltik={ltik}
-      isProductionEnvironment={config.ENVIRONMENT === 'production'}
+      isProductionEnvironment={location.hostname === 'editor.serlo.org'}
     >
       {(editor) => {
         return <>{editor.element}</>
