@@ -3623,21 +3623,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@serlo/editor@npm:0.22.2":
-  version: 0.22.2
-  resolution: "@serlo/editor@npm:0.22.2"
+"@serlo/editor@npm:0.25.0":
+  version: 0.25.0
+  resolution: "@serlo/editor@npm:0.25.0"
   dependencies:
     "@open-iframe-resizer/react": "npm:1.2.1"
     "@serlo/katex-styles": "npm:1.0.1"
     "@vidstack/react": "npm:next"
-    isomorphic-dompurify: "npm:^2.19.0"
+    isomorphic-dompurify: "npm:^2.22.0"
     lit: "npm:^3.2.1"
     motion: "npm:^11.11.17"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.3.1"
     react-hot-toast: "npm:^2.4.1"
     react-resizable: "npm:^3.0.5"
-  checksum: 10/0f68240723ff94fd8e449fc30176b020fe2cd29fcb82a5086e4a75fb41787b7a4608be4e75e8adaf2c949bf66399f0378d2b733850bb341c1184ecfa2ed4c407
+  checksum: 10/f313d1fb3256dafe366fcba7ee18fd024d344fb9f0e584584f3d25fa819d1edd35478903084623d3b595101e6e94d11a8ed9fd64e8d0459f3342e177897cd268
   languageName: node
   linkType: hard
 
@@ -7282,15 +7282,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^3.2.3":
-  version: 3.2.3
-  resolution: "dompurify@npm:3.2.3"
+"dompurify@npm:^3.2.4":
+  version: 3.2.4
+  resolution: "dompurify@npm:3.2.4"
   dependencies:
     "@types/trusted-types": "npm:^2.0.7"
   dependenciesMeta:
     "@types/trusted-types":
       optional: true
-  checksum: 10/aad472bcdff40afdbb307fd02abbca86acefee9c39cb35e9634ebbc5e047750a7eeb021b02cd66894d60cf75ad021f69394de2e9e8786b0dd91c5832f497a9af
+  checksum: 10/98570c53385518a2f9b617f796926338856acfdd3369c88b5905bddf96bd7d391bf8a5433127155e0046e6faa2bfb767185fcd571b865dfabe624c099e2537f5
   languageName: node
   linkType: hard
 
@@ -10191,13 +10191,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"isomorphic-dompurify@npm:^2.19.0":
-  version: 2.20.0
-  resolution: "isomorphic-dompurify@npm:2.20.0"
+"isomorphic-dompurify@npm:^2.22.0":
+  version: 2.22.0
+  resolution: "isomorphic-dompurify@npm:2.22.0"
   dependencies:
-    dompurify: "npm:^3.2.3"
+    dompurify: "npm:^3.2.4"
     jsdom: "npm:^26.0.0"
-  checksum: 10/af4b59f538874dff7886062ea090e6708fd30ddcf3437fb35d58cbc1ead3b62f62b31581b2527393434876bbdfcb688e51e0803db100b56986e30d5a1c3cf129
+  checksum: 10/eb897c851279d725a611760ec85c963e8f6825e924595dabd7bfa4b2113d28b78c4983dba3c335ffeff34a75f294357487ddb06e2e66e56e95b56b06cf31f91a
   languageName: node
   linkType: hard
 
@@ -14449,7 +14449,7 @@ __metadata:
     "@eslint/js": "npm:^9.14.0"
     "@paralleldrive/cuid2": "npm:^2.2.2"
     "@sentry/node": "npm:^9.8.0"
-    "@serlo/editor": "npm:0.22.2"
+    "@serlo/editor": "npm:0.25.0"
     "@types/jsonwebtoken": "npm:9.0.8"
     "@types/lodash": "npm:^4"
     "@types/ltijs": "npm:4.0.12"
