@@ -35,11 +35,7 @@ async function setup() {
         // Set sameSite to 'None' if the testing platform is in a different domain and https is being used
         sameSite: config.ENVIRONMENT === 'local' ? '' : 'None',
       },
-      // Enable dev mode in dev environments
-      devMode:
-        config.ENVIRONMENT === 'local' ||
-        config.ENVIRONMENT === 'development' ||
-        config.ENVIRONMENT === 'staging',
+      devMode: true,
     }
   )
 
