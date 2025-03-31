@@ -11190,9 +11190,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ltijs@npm:6.0.0-alpha.2":
-  version: 6.0.0-alpha.2
-  resolution: "ltijs@npm:6.0.0-alpha.2"
+"ltijs@npm:5.9.6":
+  version: 5.9.6
+  resolution: "ltijs@npm:5.9.6"
   dependencies:
     "@babel/runtime": "npm:^7.24.4"
     body-parser: "npm:^1.20.2"
@@ -11208,7 +11208,7 @@ __metadata:
     parse-link-header: "npm:^2.0.0"
     rasha: "npm:^1.2.5"
     sprightly: "npm:^2.0.1"
-  checksum: 10/b65dd889b6262aa3cf3909fb47bd1b67f9af0a9edcb1e52471efed813691183700a067b8804dffe2fea194cdfb0b2126adbf6e9e9556eadcf9897f0516fddee2
+  checksum: 10/83f10bd38cc2b2ba22c7387ef55ad97590fa889804c93cc7627870b75ac81d49dc877c9ade3a4c73d2028f96ae8600f2fec3e44e42aa34e5879827aa62013bbc
   languageName: node
   linkType: hard
 
@@ -14522,7 +14522,7 @@ __metadata:
     jwks-rsa: "npm:^3.1.0"
     jwt-decode: "npm:4.0.0"
     lodash: "npm:^4.17.21"
-    ltijs: "npm:6.0.0-alpha.2"
+    ltijs: "npm:5.9.6"
     mongodb: "npm:6.15.0"
     multer: "npm:^1.4.5-lts.2"
     mysql2: "npm:^3.12.0"
