@@ -131,8 +131,6 @@ export async function login(req: Request, res: Response) {
     return
   }
 
-  const { value: edusharingEmbedSession } = findResult
-
   if (
     !t
       .type({
@@ -141,13 +139,13 @@ export async function login(req: Request, res: Response) {
         dataToken: t.string,
         iss: t.string,
       })
-      .is(edusharingEmbedSession)
+      .is(findResult)
   ) {
     res.status(400).send('login_hint is invalid or session is expired')
     return
   }
 
-  const { user, nodeId, dataToken, iss } = edusharingEmbedSession
+  const { user, nodeId, dataToken, iss } = findResult
 
   const edusharingAsToolConfig = getEdusharingAsToolConfiguration({
     issWhenEdusharingLaunchedSerloEditor: iss,
@@ -309,19 +307,17 @@ export async function done(req: Request, res: Response) {
   const findResult = await edusharingEmbedNonces.findOneAndDelete({
     _id: nonceId,
   })
-  if (!findResult.ok) {
+  if (!findResult) {
     res.status(400).send('No entry found in deeplinkNonces')
     return
   }
 
-  const deeplinkNonce = findResult.value
-
-  if (!t.type({ nonce: t.string }).is(deeplinkNonce)) {
+  if (!t.type({ nonce: t.string }).is(findResult)) {
     res.status(400).send('deeplink flow session expired')
     return
   }
 
-  if (decoded.nonce !== deeplinkNonce.nonce) {
+  if (decoded.nonce !== findResult.nonce) {
     res.status(400).send('nonce is invalid')
     return
   }
