@@ -9,6 +9,8 @@ import config from '../utils/config'
 import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
 import type { Entity } from './types/entity'
+import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
+import * as Sentry from '@sentry/node'
 
 let database: Database | null = null
 
@@ -59,6 +61,35 @@ export class Database {
       return existingEntity
     }
 
+    // If on edu-sharing and if we do not find an existing entity in our database there are two possibilities:
+    // (A) This is a completely new entity.
+    // (B) This is a copy of an existing entity on edu-sharing.
+    // If (B), we need to initialize the state when creating a new entity in our database with the state we get from edu-sharing.
+    const initialContent = iss.includes('edu-sharing')
+      ? await tryGetSerloEntityFromEdusharing(idToken, custom)
+      : null
+
+    // Check if initialContent is valid format
+    const ExpectedContentType = t.union([
+      t.null,
+      // Old format
+      t.type({
+        plugin: t.string,
+        state: t.unknown,
+      }),
+      // New format
+      t.type({
+        document: t.unknown,
+      }),
+    ])
+    if (!ExpectedContentType.is(initialContent)) {
+      const error = new Error(
+        `Saving new entity to database: Attempted to save invalid initial content. Was: ${JSON.stringify(initialContent)}`
+      )
+      Sentry.captureException(error)
+      throw error
+    }
+
     const customClaimId = t.type({ id: t.string }).is(custom) ? custom.id : null
     const edusharingNodeId = t.type({ nodeId: t.string }).is(custom)
       ? custom.nodeId
@@ -66,12 +97,13 @@ export class Database {
 
     // If there is no existing entity, create one
     const insertionResult = await mariaDB.mutate(
-      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, user_when_first_opened, id_token_when_first_opened, id_token_when_created) values (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, content, user_when_first_opened, id_token_when_first_opened, id_token_when_created) values (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         iss,
         resourceLinkId,
         customClaimId,
         edusharingNodeId,
+        JSON.stringify(initialContent),
         user,
         JSON.stringify(idToken),
         idTokenWhenCreated,
