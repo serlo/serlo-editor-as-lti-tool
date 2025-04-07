@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 
 import jwt from 'jsonwebtoken'
 import path from 'path'
@@ -14,8 +14,10 @@ import { LtiCustomClaim } from './types/lti-custom-claim'
 import { errorMessageToUser } from './error-message-to-user'
 import * as t from 'io-ts'
 import { createAccessToken } from './util/create-acccess-token'
-import type { AccessToken } from './types/access-token'
+import { AccessTokenType, type AccessToken } from './types/access-token'
 import type { Entity } from './types/entity'
+import * as Sentry from '@sentry/node'
+import { getEdusharingInfo } from './edusharing/get-edusharing-info'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -255,25 +257,26 @@ function getEditorMode(
     : 'read'
 }
 
-export async function getEntity(req: Request, res: Response) {
-  const database = getMariaDB()
-
-  const accessToken = req.query.accessToken
-  if (typeof accessToken !== 'string') {
-    return res.send('Missing or invalid access token')
-  }
-
-  let decodedAccessToken
+export async function getEntity(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   try {
-    decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
-  } catch (error) {
-    logger.error(error)
-    return res.json({ content: 'Invalid access token' })
-  }
+    const database = getMariaDB()
 
-  // Get json from database with decodedAccessToken.entityId
-  const entity = await database.fetchOptional<Entity | null>(
-    `
+    const accessToken = req.query.accessToken
+    if (typeof accessToken !== 'string') {
+      const error = new Error('Get entity: Missing access token')
+      Sentry.captureException(error)
+      throw error
+    }
+
+    const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
+
+    // Get json from database with decodedAccessToken.entityId
+    const entity = await database.fetchOptional<Entity | null>(
+      `
       SELECT
         id,
         resource_link_id,
@@ -284,26 +287,72 @@ export async function getEntity(req: Request, res: Response) {
       WHERE
         id = ?
     `,
-    [String(decodedAccessToken.entityId)]
-  )
+      [String(decodedAccessToken.entityId)]
+    )
 
-  logger.info('entity: ', entity)
+    logger.info('entity: ', entity)
 
-  res.json(entity)
+    res.json(entity)
+  } catch (error) {
+    // Forward error to express to handle error without crashing
+    // See: https://expressjs.com/en/guide/error-handling.html
+    next(error)
+  }
 }
 
-export async function putEntity(req: Request, res: Response) {
+export async function putEntity(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    await saveEntityInOurDatabase(req)
+
+    // If we are on edu-sharing, we additionally save the entity to edu-sharing.
+    // Why? When the user creates a copy of a Serlo Editor entity on edu-sharing and opens the new copy, our service does not know what other entity on edu-sharing was copied. But using this, it can fetch the content json from edu-sharing to initialize the state in our database.
+    const idToken = res.locals.token as IdToken
+    const isEdusharing = idToken.iss.includes('edu-sharing')
+    if (isEdusharing) {
+      saveEntityInEdusharing(req, res, idToken)
+        // Do not forward error to express. To the user, a failed save to edu-sharing is still considered successful.
+        .catch(() => {})
+    }
+
+    res.sendStatus(200)
+  } catch (error) {
+    // Forward error to express to handle error without crashing
+    // See: https://expressjs.com/en/guide/error-handling.html
+    next(error)
+  }
+}
+
+async function saveEntityInOurDatabase(req: Request) {
   const database = getMariaDB()
+  const messagePrefix = 'Saving entity to database'
 
   const accessToken = req.body.accessToken
   if (typeof accessToken !== 'string') {
-    return res.send('Missing or invalid access token')
+    const error = new Error(`${messagePrefix}: Missing access token`)
+    Sentry.captureException(error)
+    throw error
   }
 
-  const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
+  const decodedAccessToken = jwt.verify(accessToken, ltijsKey)
+
+  if (!AccessTokenType.is(decodedAccessToken)) {
+    const error = new Error(
+      `${messagePrefix}: Access token malformed. Was: ${JSON.stringify(decodedAccessToken)}`
+    )
+    Sentry.captureException(error)
+    throw error
+  }
 
   if (decodedAccessToken.accessRight !== 'write') {
-    return res.send('Access token grants no right to modify content')
+    const error = new Error(
+      `${messagePrefix}: Access token grants no right to modify content`
+    )
+    Sentry.captureException(error)
+    throw error
   }
 
   // Modify entity with decodedAccessToken.entityId in database
@@ -316,6 +365,66 @@ export async function putEntity(req: Request, res: Response) {
       decodedAccessToken.entityId
     } modified in database. New state:\n${req.body.editorState}`
   )
+}
 
-  return res.send('Success')
+async function saveEntityInEdusharing(
+  req: Request,
+  res: Response,
+  idToken: IdToken
+) {
+  const {
+    appId,
+    dataToken,
+    keyId,
+    nodeId,
+    postContentApiUrl,
+    privateKey,
+    user,
+  } = await getEdusharingInfo(idToken, res.locals.context?.custom)
+
+  if (!postContentApiUrl) {
+    Sentry.captureException(
+      new Error(`Saving to edu-sharing: postContentApiUrl was missing`)
+    )
+    return
+  }
+
+  const editorStateString = JSON.stringify(req.body.editorState)
+
+  const payload = {
+    appId,
+    nodeId,
+    user,
+    dataToken,
+  }
+  const message = jwt.sign(payload, privateKey, {
+    keyid: keyId,
+    algorithm: 'RS256',
+  })
+
+  const url = new URL(postContentApiUrl)
+  url.searchParams.append('jwt', message)
+  url.searchParams.append('mimetype', 'application/json')
+  url.searchParams.append('versionComment', 'Automatische Speicherung')
+
+  const blob = new Blob([editorStateString], {
+    type: 'application/json',
+  })
+
+  const data = new FormData()
+  data.set('file', blob)
+
+  const response = await fetch(url.href, {
+    method: 'POST',
+    body: data,
+  })
+
+  if (!response.ok) {
+    Sentry.captureException(
+      new Error(
+        `Saving to edu-sharing: Fetch failed with status ${response.status} and body ${JSON.stringify(response.body)}`
+      )
+    )
+    return
+  }
 }

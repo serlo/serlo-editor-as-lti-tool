@@ -9,6 +9,8 @@ import config from '../utils/config'
 import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
 import type { Entity } from './types/entity'
+import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
+import * as Sentry from '@sentry/node'
 
 let database: Database | null = null
 
@@ -59,6 +61,15 @@ export class Database {
       return existingEntity
     }
 
+    // If on edu-sharing and if we do not find an existing entity in our database we need to check if this either:
+    // (A) A new entity
+    // (B) A copy of an existing entity on edu-sharing
+    // Here, we try to get an existing entity from edu-sharing. If none exists, we have (A) and set the initial content to null. If one exists, we have (B) and use the state to initialize the new entity in our database.
+    // This is a workaround for a known limitation in LTI. See: https://www.imsglobal.org/lti-course-copy-road-nowhere
+    const initialContentString = iss.includes('edu-sharing')
+      ? await tryGetSerloEntityFromEdusharing(idToken, custom)
+      : null
+
     const customClaimId = t.type({ id: t.string }).is(custom) ? custom.id : null
     const edusharingNodeId = t.type({ nodeId: t.string }).is(custom)
       ? custom.nodeId
@@ -66,12 +77,13 @@ export class Database {
 
     // If there is no existing entity, create one
     const insertionResult = await mariaDB.mutate(
-      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, user_when_first_opened, id_token_when_first_opened, id_token_when_created) values (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, content, user_when_first_opened, id_token_when_first_opened, id_token_when_created) values (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         iss,
         resourceLinkId,
         customClaimId,
         edusharingNodeId,
+        initialContentString,
         user,
         JSON.stringify(idToken),
         idTokenWhenCreated,

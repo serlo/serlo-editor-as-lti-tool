@@ -153,7 +153,6 @@ export class EdusharingServer {
     const storage = multer.memoryStorage()
     const upload = multer({ storage })
 
-    // Currently unused
     this.app.post(
       '/edu-sharing/rest/ltiplatform/v13/content',
       upload.single('file'),
