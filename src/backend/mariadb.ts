@@ -10,7 +10,6 @@ import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
 import type { Entity } from './types/entity'
 import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
-import * as Sentry from '@sentry/node'
 
 let database: Database | null = null
 
