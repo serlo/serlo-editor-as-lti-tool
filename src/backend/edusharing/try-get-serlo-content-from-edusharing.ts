@@ -34,6 +34,8 @@ export async function tryGetSerloEntityFromEdusharing(
 
   const edusharingResponse = await fetch(url.href)
 
+  if (!edusharingResponse.ok) return null
+
   const stringifiedDocumentState = await edusharingResponse.text()
 
   return stringifiedDocumentState ? stringifiedDocumentState : null
