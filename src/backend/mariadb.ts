@@ -65,30 +65,30 @@ export class Database {
     // (A) This is a completely new entity.
     // (B) This is a copy of an existing entity on edu-sharing.
     // If (B), we need to initialize the state when creating a new entity in our database with the state we get from edu-sharing.
-    const initialContent = iss.includes('edu-sharing')
+    const initialContentString = iss.includes('edu-sharing')
       ? await tryGetSerloEntityFromEdusharing(idToken, custom)
       : null
 
     // Check if initialContent is valid format
-    const ExpectedContentType = t.union([
-      t.null,
-      // Old format
-      t.type({
-        plugin: t.string,
-        state: t.unknown,
-      }),
-      // New format
-      t.type({
-        document: t.unknown,
-      }),
-    ])
-    if (!ExpectedContentType.is(initialContent)) {
-      const error = new Error(
-        `Saving new entity to database: Attempted to save invalid initial content. Was: ${JSON.stringify(initialContent)}`
-      )
-      Sentry.captureException(error)
-      throw error
-    }
+    // const ExpectedContentType = t.union([
+    //   t.null,
+    //   // Old format
+    //   t.type({
+    //     plugin: t.string,
+    //     state: t.unknown,
+    //   }),
+    //   // New format
+    //   t.type({
+    //     document: t.unknown,
+    //   }),
+    // ])
+    // if (!ExpectedContentType.is(initialContent)) {
+    //   const error = new Error(
+    //     `Saving new entity to database: Attempted to save invalid initial content. Was: ${JSON.stringify(initialContent)}`
+    //   )
+    //   Sentry.captureException(error)
+    //   throw error
+    // }
 
     const customClaimId = t.type({ id: t.string }).is(custom) ? custom.id : null
     const edusharingNodeId = t.type({ nodeId: t.string }).is(custom)
@@ -103,7 +103,7 @@ export class Database {
         resourceLinkId,
         customClaimId,
         edusharingNodeId,
-        JSON.stringify(initialContent),
+        initialContentString,
         user,
         JSON.stringify(idToken),
         idTokenWhenCreated,
