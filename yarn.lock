@@ -1763,9 +1763,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dotenvx/dotenvx@npm:^1.38.5":
-  version: 1.38.5
-  resolution: "@dotenvx/dotenvx@npm:1.38.5"
+"@dotenvx/dotenvx@npm:^1.39.1":
+  version: 1.39.1
+  resolution: "@dotenvx/dotenvx@npm:1.39.1"
   dependencies:
     commander: "npm:^11.1.0"
     dotenv: "npm:^16.4.5"
@@ -1779,7 +1779,7 @@ __metadata:
   bin:
     dotenvx: src/cli/dotenvx.js
     git-dotenvx: src/cli/dotenvx.js
-  checksum: 10/930899d23345c13c837e47d6652b7ccaa73b70bf70e385fed3f824562eef5733aecb62af86ab308f970b893bc7b432ff07245177e40b8c06666c1ba942819e16
+  checksum: 10/dedcf10ce6b3027b9ee6a47ec1986fa7537b062ad98b0e2ac874355ff5091aa5e5fb1fd140033b0ea2acdfe43b6eedec7a7997649499006d3acf62b3b4328e11
   languageName: node
   linkType: hard
 
@@ -4707,12 +4707,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^22.9.0":
-  version: 22.9.0
-  resolution: "@types/node@npm:22.9.0"
+"@types/node@npm:^22.14.0":
+  version: 22.14.0
+  resolution: "@types/node@npm:22.14.0"
   dependencies:
-    undici-types: "npm:~6.19.8"
-  checksum: 10/a7df3426891868b0f5fb03e46aeddd8446178233521c624a44531c92a040cf08a82d8235f7e1e02af731fd16984665d4d71f3418caf9c2788313b10f040d615d
+    undici-types: "npm:~6.21.0"
+  checksum: 10/d0669a8a37a18532c886ccfa51eb3fe1e46088deb4d3d27ebcd5d7d68bd6343ad1c7a3fcb85164780a57629359c33a6c917ecff748ea232bceac7692acc96537
   languageName: node
   linkType: hard
 
@@ -14488,7 +14488,7 @@ __metadata:
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.777.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.777.0"
-    "@dotenvx/dotenvx": "npm:^1.38.5"
+    "@dotenvx/dotenvx": "npm:^1.39.1"
     "@eslint/compat": "npm:^1.2.5"
     "@eslint/js": "npm:^9.23.0"
     "@paralleldrive/cuid2": "npm:^2.2.2"
@@ -14498,7 +14498,7 @@ __metadata:
     "@types/lodash": "npm:^4"
     "@types/ltijs": "npm:4.0.12"
     "@types/multer": "npm:^1"
-    "@types/node": "npm:^22.9.0"
+    "@types/node": "npm:^22.14.0"
     "@types/react": "npm:^18.3.12"
     "@types/react-dom": "npm:^18.3.1"
     "@types/url-join": "npm:^4.0.3"
@@ -14537,7 +14537,7 @@ __metadata:
     tailwindcss: "npm:3"
     ts-node: "npm:^10.9.2"
     tsx: "npm:4.19.3"
-    typescript: "npm:^5.7.3"
+    typescript: "npm:^5.8.3"
     typescript-eslint: "npm:^8.23.0"
     url-join: "npm:4.0.1"
     use-resize-observer: "npm:^9.1.0"
@@ -15879,13 +15879,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.7.3":
-  version: 5.7.3
-  resolution: "typescript@npm:5.7.3"
+"typescript@npm:^5.8.3":
+  version: 5.8.3
+  resolution: "typescript@npm:5.8.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/6a7e556de91db3d34dc51cd2600e8e91f4c312acd8e52792f243c7818dfadb27bae677175fad6947f9c81efb6c57eb6b2d0c736f196a6ee2f1f7d57b74fc92fa
+  checksum: 10/65c40944c51b513b0172c6710ee62e951b70af6f75d5a5da745cb7fab132c09ae27ffdf7838996e3ed603bb015dadd099006658046941bd0ba30340cc563ae92
   languageName: node
   linkType: hard
 
@@ -15899,13 +15899,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.7.3#optional!builtin<compat/typescript>":
-  version: 5.7.3
-  resolution: "typescript@patch:typescript@npm%3A5.7.3#optional!builtin<compat/typescript>::version=5.7.3&hash=b45daf"
+"typescript@patch:typescript@npm%3A^5.8.3#optional!builtin<compat/typescript>":
+  version: 5.8.3
+  resolution: "typescript@patch:typescript@npm%3A5.8.3#optional!builtin<compat/typescript>::version=5.8.3&hash=b45daf"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10/3ac7b7e3e899273d2fbdce6e24b93d4d53a705ad7a7e4cc83b4c57bcb6d25948abcd2a21994f6b9c73ab03960f395aae95f0458de292a66ce0134233261714c3
+  checksum: 10/98470634034ec37fd9ea61cc82dcf9a27950d0117a4646146b767d085a2ec14b137aae9642a83d1c62732d7fdcdac19bb6288b0bb468a72f7a06ae4e1d2c72c9
   languageName: node
   linkType: hard
 
@@ -15940,10 +15940,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici-types@npm:~6.19.2, undici-types@npm:~6.19.8":
+"undici-types@npm:~6.19.2":
   version: 6.19.8
   resolution: "undici-types@npm:6.19.8"
   checksum: 10/cf0b48ed4fc99baf56584afa91aaffa5010c268b8842f62e02f752df209e3dea138b372a60a963b3b2576ed932f32329ce7ddb9cb5f27a6c83040d8cd74b7a70
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.21.0":
+  version: 6.21.0
+  resolution: "undici-types@npm:6.21.0"
+  checksum: 10/ec8f41aa4359d50f9b59fa61fe3efce3477cc681908c8f84354d8567bb3701fafdddf36ef6bff307024d3feb42c837cf6f670314ba37fc8145e219560e473d14
   languageName: node
   linkType: hard
 
