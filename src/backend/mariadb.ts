@@ -61,34 +61,14 @@ export class Database {
       return existingEntity
     }
 
-    // If on edu-sharing and if we do not find an existing entity in our database there are two possibilities:
-    // (A) This is a completely new entity.
-    // (B) This is a copy of an existing entity on edu-sharing.
-    // If (B), we need to initialize the state when creating a new entity in our database with the state we get from edu-sharing.
+    // If on edu-sharing and if we do not find an existing entity in our database we need to check if this either:
+    // (A) A new entity
+    // (B) A copy of an existing entity on edu-sharing
+    // Here, we try to get an existing entity from edu-sharing. If none exists, we have (A) and set the initial content to null. If one exists, we have (B) and use the state to initialize the new entity in our database.
+    // This is a workaround for a known limitation in LTI. See: https://www.imsglobal.org/lti-course-copy-road-nowhere
     const initialContentString = iss.includes('edu-sharing')
       ? await tryGetSerloEntityFromEdusharing(idToken, custom)
       : null
-
-    // Check if initialContent is valid format
-    // const ExpectedContentType = t.union([
-    //   t.null,
-    //   // Old format
-    //   t.type({
-    //     plugin: t.string,
-    //     state: t.unknown,
-    //   }),
-    //   // New format
-    //   t.type({
-    //     document: t.unknown,
-    //   }),
-    // ])
-    // if (!ExpectedContentType.is(initialContent)) {
-    //   const error = new Error(
-    //     `Saving new entity to database: Attempted to save invalid initial content. Was: ${JSON.stringify(initialContent)}`
-    //   )
-    //   Sentry.captureException(error)
-    //   throw error
-    // }
 
     const customClaimId = t.type({ id: t.string }).is(custom) ? custom.id : null
     const edusharingNodeId = t.type({ nodeId: t.string }).is(custom)

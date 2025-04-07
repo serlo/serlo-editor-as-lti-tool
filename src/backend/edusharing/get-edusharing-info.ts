@@ -33,13 +33,6 @@ export async function getEdusharingInfo(idToken: IdToken, custom: unknown) {
   return {
     keyId,
     privateKey,
-    appId: custom.appId,
-    nodeId: custom.nodeId,
-    user: custom.user,
-    postContentApiUrl: custom.postContentApiUrl,
-    getContentApiUrl: custom.getContentApiUrl,
-    dataToken: custom.dataToken,
-    version: custom.version,
-    fileName: custom.fileName,
+    ...custom,
   }
 }
