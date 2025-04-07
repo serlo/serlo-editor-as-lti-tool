@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 
 import jwt from 'jsonwebtoken'
 import path from 'path'
@@ -257,21 +257,26 @@ function getEditorMode(
     : 'read'
 }
 
-export async function getEntity(req: Request, res: Response) {
-  const database = getMariaDB()
+export async function getEntity(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const database = getMariaDB()
 
-  const accessToken = req.query.accessToken
-  if (typeof accessToken !== 'string') {
-    const error = new Error('Get entity: Missing access token')
-    Sentry.captureException(error)
-    throw error
-  }
+    const accessToken = req.query.accessToken
+    if (typeof accessToken !== 'string') {
+      const error = new Error('Get entity: Missing access token')
+      Sentry.captureException(error)
+      throw error
+    }
 
-  const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
+    const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
 
-  // Get json from database with decodedAccessToken.entityId
-  const entity = await database.fetchOptional<Entity | null>(
-    `
+    // Get json from database with decodedAccessToken.entityId
+    const entity = await database.fetchOptional<Entity | null>(
+      `
       SELECT
         id,
         resource_link_id,
@@ -282,28 +287,43 @@ export async function getEntity(req: Request, res: Response) {
       WHERE
         id = ?
     `,
-    [String(decodedAccessToken.entityId)]
-  )
+      [String(decodedAccessToken.entityId)]
+    )
 
-  logger.info('entity: ', entity)
+    logger.info('entity: ', entity)
 
-  res.json(entity)
+    res.json(entity)
+  } catch (error) {
+    // Forward error to express to handle error without crashing
+    // See: https://expressjs.com/en/guide/error-handling.html
+    next(error)
+  }
 }
 
-export async function putEntity(req: Request, res: Response) {
-  await saveEntityInOurDatabase(req)
+export async function putEntity(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    await saveEntityInOurDatabase(req)
 
-  // If we are on edu-sharing, we additionally save the entity to edu-sharing.
-  // Why? When the user creates a copy of a Serlo Editor entity on edu-sharing and opens the new copy, our service does not know what other entity on edu-sharing was copied. But using this, it can fetch the content json from edu-sharing to initialize the state in our database.
-  const idToken = res.locals.token as IdToken
-  const isEdusharing = idToken.iss.includes('edu-sharing')
-  if (isEdusharing) {
-    saveEntityInEdusharing(req, res, idToken)
-      // Do not forward error to express. To the user, a failed save to edu-sharing is still considered successful.
-      .catch(() => {})
+    // If we are on edu-sharing, we additionally save the entity to edu-sharing.
+    // Why? When the user creates a copy of a Serlo Editor entity on edu-sharing and opens the new copy, our service does not know what other entity on edu-sharing was copied. But using this, it can fetch the content json from edu-sharing to initialize the state in our database.
+    const idToken = res.locals.token as IdToken
+    const isEdusharing = idToken.iss.includes('edu-sharing')
+    if (isEdusharing) {
+      saveEntityInEdusharing(req, res, idToken)
+        // Do not forward error to express. To the user, a failed save to edu-sharing is still considered successful.
+        .catch(() => {})
+    }
+
+    res.sendStatus(200)
+  } catch (error) {
+    // Forward error to express to handle error without crashing
+    // See: https://expressjs.com/en/guide/error-handling.html
+    next(error)
   }
-
-  res.sendStatus(200)
 }
 
 async function saveEntityInOurDatabase(req: Request) {
@@ -320,7 +340,9 @@ async function saveEntityInOurDatabase(req: Request) {
   const decodedAccessToken = jwt.verify(accessToken, ltijsKey)
 
   if (!AccessTokenType.is(decodedAccessToken)) {
-    const error = new Error(`${messagePrefix}: Access token malformed`)
+    const error = new Error(
+      `${messagePrefix}: Access token malformed. Was: ${JSON.stringify(decodedAccessToken)}`
+    )
     Sentry.captureException(error)
     throw error
   }
