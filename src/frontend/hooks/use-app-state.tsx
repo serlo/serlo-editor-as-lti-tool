@@ -94,7 +94,8 @@ export function useAppState() {
       .catch(() => {
         setAppState({
           type: 'error',
-          message: 'Error: Failed to fetch entity from database.',
+          message:
+            'Fehler: Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.',
         })
       })
 

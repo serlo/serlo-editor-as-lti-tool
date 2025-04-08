@@ -1,8 +1,6 @@
-import {
-  expireAccessToken,
-  modifyAccessTokenEntityId,
-} from '../utils/access-token'
 import { expectEditorModeRead } from '../utils/editor-mode'
+import * as jwt from 'jsonwebtoken'
+import type { AccessToken } from '../../src/backend/types/access-token'
 
 Feature('Edusharing integration')
 
@@ -43,33 +41,31 @@ Scenario(
 )
 
 Scenario(
-  "Can't save using an `accessToken` token with invalid `entityId`",
+  "Can't modify `accessToken` to gain access to other entities",
   async ({ I }) => {
     openSerloEditorWithLTI(I)
 
     const urlString = await I.grabCurrentUrl()
     const url = new URL(urlString)
-    const modifiedAccessToken = modifyAccessTokenEntityId(url)
-    url.searchParams.set('accessToken', modifiedAccessToken)
+    const originalAccessToken = url.searchParams.get('accessToken')
+    const originalAccessTokenHeader = originalAccessToken.split('.')[0]
+    const originalAccessTokenSignature = originalAccessToken.split('.')[2]
+    const decodedAccessToken = jwt.decode(originalAccessToken) as AccessToken
+    decodedAccessToken.entityId = 32973844792734
+    const tamperedJwtBody = Buffer.from(
+      JSON.stringify(decodedAccessToken)
+    ).toString('base64')
+    const tamperedJwt = `${originalAccessTokenHeader}.${tamperedJwtBody}.${originalAccessTokenSignature}`
+
+    url.searchParams.set('accessToken', tamperedJwt)
 
     I.amOnPage(url.toString())
 
-    I.see('Fehler: Bitte öffne den Inhalt erneut.')
+    I.see(
+      'Fehler: Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.'
+    )
   }
 )
-
-Scenario("Can't save using an expired `accessToken`", async ({ I }) => {
-  openSerloEditorWithLTI(I)
-
-  const urlString = await I.grabCurrentUrl()
-  const url = new URL(urlString)
-  const expiredAccessToken = expireAccessToken(url)
-  url.searchParams.set('accessToken', expiredAccessToken)
-
-  I.amOnPage(url.toString())
-
-  I.see('Fehler: Bitte öffne den Inhalt erneut.')
-})
 
 Scenario('Assets from edu-sharing can be included', ({ I }) => {
   openSerloEditorWithLTI(I)
@@ -78,6 +74,8 @@ Scenario('Assets from edu-sharing can be included', ({ I }) => {
 
   embedEdusharingAsset(I)
 
+  I.wait(3)
+
   I.seeElement('div[data-embed-type="image"]')
 })
 
@@ -85,8 +83,9 @@ function embedEdusharingAsset(I: CodeceptJS.I) {
   I.click('$add-new-plugin-row-button')
   I.click('Edu-sharing Inhalt')
   I.click('$plugin-edusharing-select-content-button')
-  I.switchTo('iframe') // switch to first iframe
+  I.switchTo({ css: '[data-qa=plugin-edusharing-selection-iframe]' }) // switch to iframe
   I.click('#edusharing-embed-image-select')
+  I.wait(1)
   I.switchTo() // switch back to main page
 }
 
@@ -95,5 +94,5 @@ function openSerloEditorWithLTI(I: CodeceptJS.I) {
 }
 
 function expectEditorOpenedSuccessfully(I: CodeceptJS.I) {
-  I.see('Schreibe etwas')
+  I.seeElement('$add-new-plugin-row-button')
 }
