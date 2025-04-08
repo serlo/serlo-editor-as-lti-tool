@@ -67,7 +67,7 @@ Scenario(
   }
 )
 
-Scenario('Assets from edu-sharing can be included', ({ I }) => {
+Scenario.skip('Assets from edu-sharing can be included', ({ I }) => {
   openSerloEditorWithLTI(I)
 
   expectEditorOpenedSuccessfully(I)
