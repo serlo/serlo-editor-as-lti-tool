@@ -1,4 +1,4 @@
-FROM node:22 as build
+FROM node:22 AS build
 
 WORKDIR /usr/src/app
 
@@ -8,7 +8,7 @@ RUN yarn install --immutable
 
 RUN yarn build
 
-FROM node:22 as production
+FROM node:22 AS production
 
 WORKDIR /usr/src/app
 

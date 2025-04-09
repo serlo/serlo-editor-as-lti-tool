@@ -59,6 +59,17 @@ on Uberspace
 If you need to add a new mandatory environment variable in the `.env` file, add
 it to `src/utils/config.ts`.
 
+# Using Docker to Deploy
+You may want to deploy using docker.
+First, during development, you can locally test so:
+```
+$ docker compose up -d # to be sure that it will not crash because of missing DBs
+$ docker build . -t serlo-editor-as-lti-tool
+$ nano .env # change 'localhost' to 'host.docker.internal'
+$ docker run --env-file .env --add-host host.docker.internal:host-gateway serlo-editor-as-lti-tool
+```
+TODO
+
 # .env files in deployments
 
 The .env files on Uberspace contain secrets and are stored separately in an S3
