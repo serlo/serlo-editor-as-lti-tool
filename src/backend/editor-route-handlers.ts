@@ -306,7 +306,9 @@ export async function putEntity(
   next: NextFunction
 ) {
   try {
-    await saveEntityInOurDatabase(req)
+    if (config.IS_EDUSHARING_DEPLOYMENT) {
+      await saveEntityInOurDatabase(req)
+    }
 
     // If we are on edu-sharing, we additionally save the entity to edu-sharing.
     // Why? When the user creates a copy of a Serlo Editor entity on edu-sharing and opens the new copy, our service does not know what other entity on edu-sharing was copied. But using this, it can fetch the content json from edu-sharing to initialize the state in our database.
