@@ -72,7 +72,7 @@ $ docker run --env-file .env --add-host host.docker.internal:host-gateway serlo-
 ```
 
 To publish a new docker image, just change the version at package.json and push
-to branch `development`.
+to branch `staging`.
 
 TODO
 
