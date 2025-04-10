@@ -1,4 +1,4 @@
-name: Deploy to Uberspace
+name: Publish docker image
 
 on:
   push:
