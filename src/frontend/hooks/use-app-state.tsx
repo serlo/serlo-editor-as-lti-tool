@@ -1,7 +1,6 @@
 import { SerloEditorProps, SerloRendererProps } from '@serlo/editor'
 import { useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import copyPluginToClipboardImage from '../assets/copy-plugin-to-clipboard.png'
 import type { AccessToken } from '../../backend/types/access-token'
 import type { Entity } from '../../backend/types/entity'
 
@@ -56,36 +55,7 @@ export function useAppState() {
 
     fetchEntity(accessToken, ltik)
       .then((entity) => {
-        if (entity.content === 'Invalid access token') {
-          setAppState({
-            type: 'error',
-            message: 'Fehler: Bitte öffne den Inhalt erneut.',
-          })
-          return
-        }
-
-        const resourceLinkIdFromDb = entity.resource_link_id
-        if (!resourceLinkIdFromDb || !resourceLinkIdFromUrl) {
-          setAppState({
-            type: 'error',
-            message: 'Error: resource_link_id was missing!',
-          })
-          return
-        }
-
-        if (resourceLinkIdFromDb !== resourceLinkIdFromUrl) {
-          setAppState({
-            type: 'error',
-            // In German because we expect the user to see it
-            message:
-              'Auf itslearning wurde eine Kopie erstellt. Leider ist dies aus technischen Gründen nicht möglich. Du kannst allerdings einen neuen Serlo Editor Inhalt auf itslearning erstellen und die gewünschten Inhalte per "Plugin in die Zwischenablage kopieren" & Strg-V dorthin übernehmen.',
-            imageURL: copyPluginToClipboardImage,
-          })
-          return
-        }
-
         const content = JSON.parse(entity.content)
-        // console.log('content: ', content)
         setAppState({
           type: mode === 'write' ? 'editor' : 'static-renderer',
           content,
@@ -95,7 +65,7 @@ export function useAppState() {
         setAppState({
           type: 'error',
           message:
-            'Fehler: Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.',
+            'Fehler: Der Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.',
         })
       })
 
