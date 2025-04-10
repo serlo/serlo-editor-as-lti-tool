@@ -257,47 +257,8 @@ function getEditorMode(
     : 'read'
 }
 
-export async function getEntity(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  try {
-    const database = getMariaDB()
-
-    const accessToken = req.query.accessToken
-    if (typeof accessToken !== 'string') {
-      const error = new Error('Get entity: Missing access token')
-      Sentry.captureException(error)
-      throw error
-    }
-
-    const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
-
-    // Get json from database with decodedAccessToken.entityId
-    const entity = await database.fetchOptional<Entity | null>(
-      `
-      SELECT
-        id,
-        resource_link_id,
-        custom_claim_id,
-        content
-      FROM
-        lti_entity
-      WHERE
-        id = ?
-    `,
-      [String(decodedAccessToken.entityId)]
-    )
-
-    logger.info('entity: ', entity)
-
-    res.json(entity)
-  } catch (error) {
-    // Forward error to express to handle error without crashing
-    // See: https://expressjs.com/en/guide/error-handling.html
-    next(error)
-  }
+export async function getEntity() {
+  return getStateWorker().getEntity()
 }
 
 export async function putEntity(

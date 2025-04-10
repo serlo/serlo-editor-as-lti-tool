@@ -96,7 +96,7 @@ const IOEnv = t.union([
   ProductionEnvType,
 ])
 
-export const decodedConfig = IOEnv.decode(process.env)
+const decodedConfig = IOEnv.decode(process.env)
 
 if (decodedConfig._tag === 'Left') {
   throw new Error(

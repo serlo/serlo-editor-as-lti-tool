@@ -10,6 +10,11 @@ import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
 import type { Entity } from './types/entity'
 import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
+import { Request, Response, NextFunction } from 'express'
+import { logger } from '../utils/logger'
+import * as Sentry from '@sentry/node'
+import jwt from 'jsonwebtoken'
+import { AccessToken } from './types/access-token'
 
 let database: Database | null = null
 
@@ -27,6 +32,48 @@ export class Database {
   constructor(pool: Pool) {
     this.pool = pool
     this.state = { type: 'OutsideOfTransaction' }
+  }
+
+  async getEntity(req: Request, res: Response, next: NextFunction) {
+    try {
+      const database = getMariaDB()
+
+      const accessToken = req.query.accessToken
+      if (typeof accessToken !== 'string') {
+        const error = new Error('Get entity: Missing access token')
+        Sentry.captureException(error)
+        throw error
+      }
+
+      const decodedAccessToken = jwt.verify(
+        accessToken,
+        config.LTIJS_KEY
+      ) as AccessToken
+
+      // Get json from database with decodedAccessToken.entityId
+      const entity = await database.fetchOptional<Entity | null>(
+        `
+        SELECT
+          id,
+          resource_link_id,
+          custom_claim_id,
+          content
+        FROM
+          lti_entity
+        WHERE
+          id = ?
+      `,
+        [String(decodedAccessToken.entityId)]
+      )
+
+      logger.info('entity: ', entity)
+
+      res.json(entity)
+    } catch (error) {
+      // Forward error to express to handle error without crashing
+      // See: https://expressjs.com/en/guide/error-handling.html
+      next(error)
+    }
   }
 
   public async createOrGetEntity({
