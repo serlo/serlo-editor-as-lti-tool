@@ -6,6 +6,7 @@ import {
 } from '@serlo/editor'
 import { jwtDecode } from 'jwt-decode'
 import React, { useCallback, useRef } from 'react'
+import config from '../utils/config'
 
 interface SerloContentProps {
   initialState: SerloEditorProps['initialState']
@@ -78,11 +79,21 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
     const { platformUrl } = jwtDecode(ltik) as Ltik
     const onEdusharing = platformUrl.includes('edu-sharing')
     if (onEdusharing) {
-      return [
+      const edusharingDefaultPlugins = [
         ...defaultPlugins,
         EditorPluginType.EdusharingAsset,
         EditorPluginType.SerloInjection,
       ]
+
+      if (config.IS_EDUSHARING_DEPLOYMENT) {
+        return edusharingDefaultPlugins.filter(
+          (plugin) =>
+            plugin !== EditorPluginType.Video &&
+            plugin !== EditorPluginType.Image
+        )
+      }
+
+      return edusharingDefaultPlugins
     }
 
     return defaultPlugins
