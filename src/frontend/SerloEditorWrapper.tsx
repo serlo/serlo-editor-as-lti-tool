@@ -96,6 +96,7 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
       _testingSecret={testingSecret}
       plugins={plugins}
       _ltik={ltik}
+      isProductionEnvironment={location.hostname === 'editor.serlo.org'}
     >
       {(editor) => {
         return <>{editor.element}</>

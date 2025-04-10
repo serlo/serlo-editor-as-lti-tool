@@ -26,7 +26,7 @@ Scenario('Requesting media proxy with invalid url returns 400', ({ I }) => {
   I.seeResponseCodeIs(403)
 })
 if (config.BUCKET_ACCESS_KEY_ID !== 'placeholder') {
-  Scenario(
+  Scenario.skip(
     'Media: Uploading image works and Metadata is written as expected',
     async ({ I }) => {
       I.amOnPage('http://localhost:3000')

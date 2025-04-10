@@ -34,3 +34,7 @@ dist-ssr
 !.yarn/releases
 !.yarn/plugins
 .pnp.*
+
+# Yalc 
+.yalc
+yalc.lock

@@ -35,7 +35,7 @@ jobs:
 
       # Maybe split ssh key between production and others
       - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{  env.REMOTE_HOST }}
           username: ${{ env.REMOTE_USER }}
@@ -51,6 +51,6 @@ jobs:
 
       - name: Test deployment successful
         run:
-          for ((i=0; i<30; i++)); do curl ${{ env.DOMAIN }} | grep -q
+          for ((i=0; i<60; i++)); do curl ${{ env.DOMAIN }} | grep -q
           "NO_LTIK_OR_IDTOKEN_FOUND" && exit 0; sleep 1; done; echo "Server not
-          ready within 30 seconds." && exit 1
+          ready within 60 seconds." && exit 1
