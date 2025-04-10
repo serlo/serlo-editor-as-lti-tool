@@ -2,8 +2,6 @@ name: Publish docker image
 
 on:
   push:
-    # branches:
-    # - 'development'
 
 env:
   REGISTRY: ghcr.io
@@ -21,7 +19,7 @@ jobs:
       - id: version
         uses: salsify/action-detect-and-tag-new-version@v2
         with:
-          tag-template: {VERSION}
+          tag-template: '{VERSION}'
           version-command: |
             jq ".version" --raw-output < package.json
 
