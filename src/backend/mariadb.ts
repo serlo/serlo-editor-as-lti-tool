@@ -20,7 +20,7 @@ let database: Database | null = null
 
 export function getMariaDB() {
   if (database === null) {
-    database = new Database(createPool(config.MYSQL_URI))
+    database = new Database(createPool(config.MYSQL_URI!))
   }
   return database
 }
