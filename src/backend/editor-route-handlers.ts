@@ -14,10 +14,10 @@ import { LtiCustomClaim } from './types/lti-custom-claim'
 import { errorMessageToUser } from './error-message-to-user'
 import * as t from 'io-ts'
 import { createAccessToken } from './util/create-acccess-token'
-import { AccessTokenType, type AccessToken } from './types/access-token'
-import type { Entity } from './types/entity'
+import { AccessTokenType } from './types/access-token'
 import * as Sentry from '@sentry/node'
-import { getEdusharingInfo } from './edusharing/get-edusharing-info'
+import { saveEntityInEdusharing } from './edusharing/api-handler'
+import { getStateWorker } from './state-worker'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -328,66 +328,4 @@ async function saveEntityInOurDatabase(req: Request) {
       decodedAccessToken.entityId
     } modified in database. New state:\n${req.body.editorState}`
   )
-}
-
-async function saveEntityInEdusharing(
-  req: Request,
-  res: Response,
-  idToken: IdToken
-) {
-  const {
-    appId,
-    dataToken,
-    keyId,
-    nodeId,
-    postContentApiUrl,
-    privateKey,
-    user,
-  } = await getEdusharingInfo(idToken, res.locals.context?.custom)
-
-  if (!postContentApiUrl) {
-    Sentry.captureException(
-      new Error(`Saving to edu-sharing: postContentApiUrl was missing`)
-    )
-    return
-  }
-
-  const editorStateString = JSON.stringify(req.body.editorState)
-
-  const payload = {
-    appId,
-    nodeId,
-    user,
-    dataToken,
-  }
-  const message = jwt.sign(payload, privateKey, {
-    keyid: keyId,
-    algorithm: 'RS256',
-  })
-
-  const url = new URL(postContentApiUrl)
-  url.searchParams.append('jwt', message)
-  url.searchParams.append('mimetype', 'application/json')
-  url.searchParams.append('versionComment', 'Automatische Speicherung')
-
-  const blob = new Blob([editorStateString], {
-    type: 'application/json',
-  })
-
-  const data = new FormData()
-  data.set('file', blob)
-
-  const response = await fetch(url.href, {
-    method: 'POST',
-    body: data,
-  })
-
-  if (!response.ok) {
-    Sentry.captureException(
-      new Error(
-        `Saving to edu-sharing: Fetch failed with status ${response.status} and body ${JSON.stringify(response.body)}`
-      )
-    )
-    return
-  }
 }
