@@ -148,11 +148,11 @@ export async function onConnect(idToken: IdToken, _: Request, res: Response) {
     return
   }
 
-  const mariaDB = getMariaDB()
+  const stateWorker = getStateWorker()
 
   // First open -> Create new row in database
   // Not first open -> Get existing row in database
-  const entity = await mariaDB.createOrGetEntity({
+  const entity = await stateWorker.createOrGetEntity({
     custom,
     idToken,
     iss,
