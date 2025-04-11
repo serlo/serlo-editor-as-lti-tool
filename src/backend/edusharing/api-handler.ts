@@ -5,7 +5,6 @@ import * as Sentry from '@sentry/node'
 import jwt from 'jsonwebtoken'
 import { EdusharingLtiCustomClaimType } from '../types/edu-sharing-lti-custom-claim'
 import { Provider } from 'ltijs'
-import config from '../../utils/config'
 
 export function getEdusharingApiHandler() {
   return {
@@ -13,15 +12,25 @@ export function getEdusharingApiHandler() {
       req: Request,
       res: Response,
       idToken: IdToken
-    ) => {},
+    ) => {
+      const response = await getEntityResponse(req, res)
+      if (response.status === 200) {
+        const entity = await response.json()
+        if (entity) return entity
+      }
+      const saveResponse = await saveEntityInEdusharing(req, res, idToken)
+
+      if (!saveResponse) return
+      if (saveResponse.status === 200) {
+        const entity = await saveResponse.json()
+        if (entity) return entity
+      }
+    },
     getEntity: getEntityFromEdusharing,
   }
 }
 
-async function getEntityFromEdusharing(
-  _: Request,
-  res: Response
-): Promise<void> {
+async function getEntityResponse(_: Request, res: Response) {
   const custom = res.locals.context?.custom
 
   if (!EdusharingLtiCustomClaimType.is(custom)) {
@@ -84,7 +93,11 @@ async function getEntityFromEdusharing(
 
   url.searchParams.append('jwt', message)
 
-  const response = await fetch(url.href)
+  return await fetch(url.href)
+}
+
+async function getEntityFromEdusharing(_: Request, res: Response) {
+  const response = await getEntityResponse(_, res)
 
   res.status(response.status).send(await response.text())
 }
@@ -149,4 +162,5 @@ export async function saveEntityInEdusharing(
     )
     return
   }
+  return response
 }
