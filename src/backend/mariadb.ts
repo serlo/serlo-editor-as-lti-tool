@@ -19,7 +19,15 @@ import { AccessToken } from './types/access-token'
 let database: Database | null = null
 
 export function getMariaDB() {
+  if (config.IS_EDUSHARING_DEPLOYMENT) {
+    const error = new Error(
+      'Wrong execution path: MariaDB is not supposed to be called in edu-sharing deployment'
+    )
+    Sentry.captureException(error)
+    throw error
+  }
   if (database === null) {
+    // If IS_EDUSHARING_DEPLOYMENT is false, MYSQL_URI will be set. See src/utils/config.ts
     database = new Database(createPool(config.MYSQL_URI!))
   }
   return database
