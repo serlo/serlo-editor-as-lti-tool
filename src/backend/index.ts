@@ -11,6 +11,7 @@ import * as editor from './editor-route-handlers'
 import * as ai from './ai-route-handlers'
 import * as media from './media-route-handlers'
 import { logger } from '../utils/logger'
+import { getStateWorker } from './state-worker.js'
 
 async function setup() {
   ltijs.setup(
@@ -81,7 +82,7 @@ async function setup() {
   app.get('/deeplinking-done', editor.deeplinkingDone)
 
   // Get content json
-  app.get('/entity', editor.getEntity)
+  app.get('/entity', getStateWorker().getEntity)
 
   // Save content json
   app.put('/entity', editor.putEntity)
