@@ -10,12 +10,15 @@ import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
 import type { Entity } from './types/entity'
 import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
+import path from 'path'
+import { readFile } from 'fs/promises'
 
 let database: Database | null = null
 
 export function getMariaDB() {
   if (database === null) {
     database = new Database(createPool(config.MYSQL_URI))
+    database.ensureTablesExist()
   }
   return database
 }
@@ -27,6 +30,14 @@ export class Database {
   constructor(pool: Pool) {
     this.pool = pool
     this.state = { type: 'OutsideOfTransaction' }
+  }
+
+  public async ensureTablesExist() {
+    const initSql = await readFile(
+      path.join(__dirname, '../../db/createTablesIfNotExist.sql'),
+      'utf-8'
+    )
+    this.execute<ResultSetHeader>(initSql)
   }
 
   public async createOrGetEntity({
