@@ -12,6 +12,7 @@ import type { Entity } from './types/entity'
 import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
 import path from 'path'
 import { readFile } from 'fs/promises'
+import { LtiCustomClaimType } from './types/lti-custom-claim'
 
 let database: Database | null = null
 
@@ -43,29 +44,26 @@ export class Database {
   public async createOrGetEntity({
     custom,
     idToken,
-    iss,
+    platform,
     resourceLinkId,
     user,
   }: {
     custom: unknown
     idToken: IdToken
-    iss: string
+    platform: string
     resourceLinkId: string
     user: string
   }) {
     const mariaDB = getMariaDB()
 
-    // Only exists when there was a LTI deep linking launch before
-    const idTokenWhenCreated = t
-      .type({ deeplinkingidtoken: t.string })
-      .is(custom)
-      ? custom.deeplinkingidtoken
-      : null
+    const userWhenCreated = LtiCustomClaimType.is(custom)
+      ? custom.createdbyuser
+      : undefined
 
-    // Check if there is already a database entry with (iss, resource_link_id)
+    // Check if there is already a database entry
     const existingEntity = await mariaDB.fetchOptional<Entity | null>(
-      'SELECT * FROM lti_entity WHERE resource_link_id = ? AND iss = ?',
-      [resourceLinkId, iss]
+      'SELECT * FROM lti_entity WHERE lti_resource_link_id = ? AND lti_platform = ?',
+      [resourceLinkId, platform]
     )
     if (existingEntity) {
       return existingEntity
@@ -76,7 +74,7 @@ export class Database {
     // (B) A copy of an existing entity on edu-sharing
     // Here, we try to get an existing entity from edu-sharing. If none exists, we have (A) and set the initial content to null. If one exists, we have (B) and use the state to initialize the new entity in our database.
     // This is a workaround for a known limitation in LTI. See: https://www.imsglobal.org/lti-course-copy-road-nowhere
-    const initialContentString = iss.includes('edu-sharing')
+    const initialContentString = platform.includes('edu-sharing')
       ? await tryGetSerloEntityFromEdusharing(idToken, custom)
       : null
 
@@ -86,19 +84,21 @@ export class Database {
       : null
 
     // If there is no existing entity, create one
-    const insertionResult = await mariaDB.mutate(
-      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, content, user_when_first_opened, id_token_when_first_opened, id_token_when_created) values (?, ?, ?, ?, ?, ?, ?, ?)',
+    const [insertionResult] = await mariaDB.pool.query(
+      'INSERT INTO lti_entity (lti_platform, lti_resource_link_id, lti_custom_claim_id, edusharing_node_id, content, lti_user_when_first_opened, lti_user_when_created) values (?, ?, ?, ?, ?, ?, ?)',
       [
-        iss,
+        platform,
         resourceLinkId,
         customClaimId,
         edusharingNodeId,
         initialContentString,
         user,
-        JSON.stringify(idToken),
-        idTokenWhenCreated,
+        userWhenCreated,
       ]
     )
+
+    if (!('insertId' in insertionResult))
+      throw new Error('Inserting new entity to database failed')
 
     const insertedEntity = await mariaDB.fetchOne<Entity>(
       'SELECT * FROM lti_entity WHERE id = ?',

@@ -41,7 +41,7 @@ export async function deeplinkingDone(
       // Important: Only use lowercase letters in key. When I used uppercase letters they were changed to lowercase letters in the LTI Resource Link launch on itslearning.
       id: ltiCustomClaimId,
       type: req.query['type']?.toString(),
-      deeplinkingidtoken: JSON.stringify(idToken),
+      createdbyuser: idToken.user,
     }
 
     // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
@@ -104,8 +104,8 @@ export async function onConnect(
       )
 
     // The LTI platform id
-    const iss = idToken.iss
-    if (!iss)
+    const platform = idToken.iss
+    if (!platform)
       throw createAndLogError(
         'iss missing in idToken during launch of Serlo editor'
       )
@@ -117,7 +117,7 @@ export async function onConnect(
         'sub missing in idToken during launch of Serlo editor'
       )
 
-    const isEdusharing = iss.includes('edu-sharing')
+    const isEdusharing = platform.includes('edu-sharing')
 
     // On Moodle 4.5.1+ (Build: 20250124) and edu-sharing we don't have a LTI deep linking launch before this launch. So, we might not get any 'custom' values here.
     const custom: unknown = idToken.platformContext?.custom
@@ -135,7 +135,7 @@ export async function onConnect(
     const entity = await mariaDB.createOrGetEntity({
       custom,
       idToken,
-      iss,
+      platform,
       resourceLinkId,
       user,
     })
@@ -283,8 +283,8 @@ export async function getEntity(
       `
       SELECT
         id,
-        resource_link_id,
-        custom_claim_id,
+        lti_resource_link_id,
+        lti_custom_claim_id,
         content
       FROM
         lti_entity
