@@ -267,7 +267,7 @@ export async function putEntity(
   next: NextFunction
 ) {
   try {
-    if (config.IS_EDUSHARING_DEPLOYMENT) {
+    if (!config.IS_EDUSHARING_DEPLOYMENT) {
       await saveEntityInOurDatabase(req)
     }
 
