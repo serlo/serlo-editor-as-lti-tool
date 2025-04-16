@@ -52,7 +52,8 @@ async function setup() {
     '/edusharing-embed/keys',
     // disage ai to make it easier to develop, revert afterwards
     '/ai/generate-content',
-    '/ai/change-content'
+    '/ai/change-content',
+    '/edusharing-embed/is-edusharing-deployment'
   )
 
   // since whitelist is not allowing wildcards we ignore the invalidToken event for selected routes
@@ -108,6 +109,10 @@ async function setup() {
 
   // Get edu-sharing embed html snippet
   app.get('/edusharing-embed/get', edusharing.get)
+
+  app.get('/edusharing-embed/is-edusharing-deployment', (_, response) => {
+    response.send(config.IS_EDUSHARING_DEPLOYMENT)
+  })
 
   app.get('/media/presigned-url', media.presignedUrl)
   app.use(media.proxyMiddleware)

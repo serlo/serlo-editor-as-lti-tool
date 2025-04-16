@@ -5,8 +5,7 @@ import {
   type SerloEditorProps,
 } from '@serlo/editor'
 import { jwtDecode } from 'jwt-decode'
-import React, { useCallback, useRef } from 'react'
-import config from '../utils/config'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SerloContentProps {
   initialState: SerloEditorProps['initialState']
@@ -33,6 +32,15 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   const urlParams = new URLSearchParams(queryString)
   const testingSecret = urlParams.get('testingSecret')
   const accessToken = urlParams.get('accessToken')
+
+  const [isEdusharingDeployment, setIsEdusharingDeployment] =
+    useState<boolean>(false)
+
+  useEffect(() => {
+    fetchIsEdusharingDeployment().then((response) =>
+      setIsEdusharingDeployment(response)
+    )
+  }, [isEdusharingDeployment])
 
   const savePendingRef = useRef<boolean>(false)
 
@@ -85,7 +93,7 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
         EditorPluginType.SerloInjection,
       ]
 
-      if (config.IS_EDUSHARING_DEPLOYMENT) {
+      if (isEdusharingDeployment) {
         return edusharingDefaultPlugins.filter(
           (plugin) =>
             plugin !== EditorPluginType.Video &&
@@ -114,4 +122,18 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
       }}
     </MemoSerloEditor>
   )
+}
+
+function fetchIsEdusharingDeployment() {
+  return new Promise<boolean>((resolve, reject) => {
+    fetch('/edusharing-embed/is-edusharing-deployment', {
+      method: 'GET',
+    })
+      .then(async (res) => {
+        resolve(await res.json())
+      })
+      .catch(() => {
+        reject()
+      })
+  })
 }
