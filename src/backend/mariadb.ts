@@ -1,6 +1,4 @@
 import {
-  type Pool,
-  type PoolConnection,
   type RowDataPacket,
   type ResultSetHeader,
   createPool,
@@ -8,40 +6,18 @@ import {
 import config from '../utils/config'
 import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
-import type { Entity } from './types/entity'
+import { LtiEntityType } from './types/entity'
 import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
 import path from 'path'
 import { readFile } from 'fs/promises'
 import { LtiCustomClaimType } from './types/lti-custom-claim'
+import { createAndLogError } from '../utils/logger'
 
-let database: Database | null = null
+const isInitialized = false
+const pool = createPool(config.MYSQL_URI)
 
-export function getMariaDB() {
-  if (database === null) {
-    database = new Database(createPool(config.MYSQL_URI))
-    database.ensureTablesExist()
-  }
-  return database
-}
-
-export class Database {
-  private state: DatabaseState
-  private pool: Pool
-
-  constructor(pool: Pool) {
-    this.pool = pool
-    this.state = { type: 'OutsideOfTransaction' }
-  }
-
-  public async ensureTablesExist() {
-    const initSql = await readFile(
-      path.join(__dirname, '../../db/createTablesIfNotExist.sql'),
-      'utf-8'
-    )
-    this.execute<ResultSetHeader>(initSql)
-  }
-
-  public async createOrGetEntity({
+const mariaDb = {
+  async createOrGetEntity({
     custom,
     idToken,
     platform,
@@ -54,18 +30,29 @@ export class Database {
     resourceLinkId: string
     user: string
   }) {
-    const mariaDB = getMariaDB()
-
     const userWhenCreated = LtiCustomClaimType.is(custom)
       ? custom.createdbyuser
       : undefined
 
     // Check if there is already a database entry
-    const existingEntity = await mariaDB.fetchOptional<Entity | null>(
+    const [selectExistingEntityRows] = await pool.query<RowDataPacket[]>(
       'SELECT * FROM lti_entity WHERE lti_resource_link_id = ? AND lti_platform = ?',
       [resourceLinkId, platform]
     )
+
+    if (selectExistingEntityRows.length > 1)
+      throw createAndLogError(
+        `Found multiple entities in database with lti_resource_link_id=${resourceLinkId} and lti_platform=${platform}`
+      )
+
+    const existingEntity = selectExistingEntityRows.at(0)
+
     if (existingEntity) {
+      if (!LtiEntityType.is(existingEntity))
+        throw createAndLogError(
+          `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(existingEntity)}`
+        )
+
       return existingEntity
     }
 
@@ -84,7 +71,7 @@ export class Database {
       : null
 
     // If there is no existing entity, create one
-    const [insertionResult] = await mariaDB.pool.query(
+    const [resultSetHeader] = await pool.query<ResultSetHeader>(
       'INSERT INTO lti_entity (lti_platform, lti_resource_link_id, lti_custom_claim_id, edusharing_node_id, content, lti_user_when_first_opened, lti_user_when_created) values (?, ?, ?, ?, ?, ?, ?)',
       [
         platform,
@@ -97,180 +84,64 @@ export class Database {
       ]
     )
 
-    if (!('insertId' in insertionResult))
-      throw new Error('Inserting new entity to database failed')
-
-    const insertedEntity = await mariaDB.fetchOne<Entity>(
+    const [selectInsertedEntityRows] = await pool.query<RowDataPacket[]>(
       'SELECT * FROM lti_entity WHERE id = ?',
-      [insertionResult.insertId]
+      [resultSetHeader.insertId]
     )
+
+    const insertedEntity = selectInsertedEntityRows.at(0)
+
+    if (!insertedEntity)
+      throw createAndLogError('Failed to insert entity into mariadb')
+
+    if (!LtiEntityType.is(insertedEntity))
+      throw createAndLogError(
+        `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(insertedEntity)}`
+      )
+
     return insertedEntity
-  }
-
-  public async beginTransaction() {
-    if (this.state.type === 'OutsideOfTransaction') {
-      const transaction = await this.pool.getConnection()
-      await transaction.beginTransaction()
-
-      this.state = { type: 'InsideTransaction', transaction }
-    } else {
-      const { transaction } = this.state
-      const newDepth =
-        this.state.type === 'InsideSavepoint' ? this.state.depth + 1 : 0
-
-      await transaction.query(`SAVEPOINT _savepoint_${newDepth}`)
-
-      this.state = { type: 'InsideSavepoint', transaction, depth: newDepth }
-    }
-
-    let isComittedOrRollbacked = false
-
-    return {
-      commit: async () => {
-        if (!isComittedOrRollbacked) {
-          await this.commitLastTransaction()
-          isComittedOrRollbacked = true
-        }
-      },
-      rollback: async () => {
-        if (!isComittedOrRollbacked) {
-          await this.rollbackLastTransaction()
-          isComittedOrRollbacked = true
-        }
-      },
-    }
-  }
-
-  private async commitLastTransaction() {
-    if (this.state.type === 'OutsideOfTransaction') return
-
-    const { transaction } = this.state
-
-    if (this.state.type === 'InsideTransaction') {
-      await transaction.commit()
-      transaction.release()
-
-      this.state = { type: 'OutsideOfTransaction' }
-    } else {
-      const { depth } = this.state
-
-      await transaction.query(`RELEASE SAVEPOINT _savepoint_${depth}`)
-
-      this.state =
-        depth > 0
-          ? { type: 'InsideSavepoint', transaction, depth: depth - 1 }
-          : { type: 'InsideTransaction', transaction }
-    }
-  }
-
-  private async rollbackLastTransaction() {
-    if (this.state.type === 'OutsideOfTransaction') return
-
-    const { transaction } = this.state
-
-    if (this.state.type === 'InsideTransaction') {
-      await this.rollbackAllTransactions()
-    } else {
-      const { depth } = this.state
-
-      await transaction.query(`ROLLBACK TO SAVEPOINT _savepoint_${depth}`)
-
-      this.state =
-        depth > 0
-          ? { type: 'InsideSavepoint', transaction, depth: depth - 1 }
-          : { type: 'InsideTransaction', transaction }
-    }
-  }
-
-  public async rollbackAllTransactions() {
-    if (this.state.type === 'OutsideOfTransaction') return
-
-    const { transaction } = this.state
-
-    await transaction.rollback()
-    transaction.release()
-
-    this.state = { type: 'OutsideOfTransaction' }
-  }
-
-  public async fetchAll<T = unknown>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T[]> {
-    return this.execute<(T & RowDataPacket)[]>(sql, params)
-  }
-
-  public async fetchOptional<T = unknown>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T | null> {
-    const [result] = await this.execute<(T & RowDataPacket)[]>(sql, params)
-
-    return result ?? null
-  }
-
-  public async fetchOne<T = unknown>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T> {
-    const result = await this.fetchOptional<T>(sql, params)
-
-    if (result == null) throw new Error('Expected one row, no row found')
-
-    return result
-  }
-
-  public async mutate(
-    sql: string,
-    params?: unknown[]
-  ): Promise<ResultSetHeader> {
-    return this.execute<ResultSetHeader>(sql, params)
-  }
-
-  public async close() {
-    await this.pool.end()
-  }
-
-  private async execute<T extends RowDataPacket[] | ResultSetHeader>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T> {
-    const numberOfTries = 10
-    const waitTime = 1000
-    for (let i = 0; i < numberOfTries; i++) {
-      try {
-        if (this.state.type === 'OutsideOfTransaction') {
-          const [rows] = await this.pool.execute<T>(sql, params)
-
-          return rows
-        } else {
-          const [rows] = await this.state.transaction.execute<T>(sql, params)
-
-          return rows
-        }
-      } catch {
-        await new Promise((res) => setTimeout(res, waitTime))
-      }
-    }
-    throw new Error(
-      `Failed to execute command in mariadb database after ${numberOfTries} tries.`
+  },
+  async getEntity(id: number) {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `
+        SELECT
+          *
+        FROM
+          lti_entity
+        WHERE
+          id = ?
+      `,
+      [String(id)]
     )
+
+    const entity = rows.at(0)
+
+    if (!entity) throw createAndLogError(`Did not find entity with id=${id}`)
+
+    if (!LtiEntityType.is(entity))
+      throw createAndLogError(
+        `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(entity)}`
+      )
+
+    return entity
+  },
+  async setContent(id: number, content: unknown) {
+    await pool.query<ResultSetHeader>(
+      'UPDATE lti_entity SET content = ? WHERE id = ?',
+      [content, id]
+    )
+  },
+}
+
+export async function getMariaDb() {
+  if (!isInitialized) {
+    // Create tables if not exist
+    const initSql = await readFile(
+      path.join(__dirname, '../../db/createTablesIfNotExist.sql'),
+      'utf-8'
+    )
+    await pool.query(initSql)
   }
-}
 
-type DatabaseState = OutsideOfTransaction | InsideTransaction | InsideSavepoint
-
-interface OutsideOfTransaction {
-  type: 'OutsideOfTransaction'
-}
-
-interface InsideTransaction {
-  type: 'InsideTransaction'
-  transaction: PoolConnection
-}
-
-interface InsideSavepoint {
-  type: 'InsideSavepoint'
-  transaction: PoolConnection
-  depth: number
+  return mariaDb
 }

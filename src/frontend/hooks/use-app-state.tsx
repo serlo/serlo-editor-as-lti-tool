@@ -2,7 +2,7 @@ import { SerloEditorProps, SerloRendererProps } from '@serlo/editor'
 import { useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import type { AccessToken } from '../../backend/types/access-token'
-import type { Entity } from '../../backend/types/entity'
+import { LtiEntityType, type LtiEntity } from '../../backend/types/entity'
 
 export type AppState =
   | { type: 'fetching-content' }
@@ -55,7 +55,7 @@ export function useAppState() {
 
     fetchEntity(accessToken, ltik)
       .then((entity) => {
-        const content = JSON.parse(entity.content)
+        const content = entity.content ? JSON.parse(entity.content) : null
         setAppState({
           type: mode === 'write' ? 'editor' : 'static-renderer',
           content,
@@ -70,7 +70,7 @@ export function useAppState() {
       })
 
     function fetchEntity(accessToken: string, ltik: string) {
-      return new Promise<Entity>((resolve, reject) => {
+      return new Promise<LtiEntity>((resolve, reject) => {
         const queryString = new URLSearchParams()
         queryString.append('accessToken', accessToken)
 
@@ -83,7 +83,13 @@ export function useAppState() {
           .then(async (res) => {
             if (res.status !== 200) reject()
 
-            const entity = (await res.json()) as Entity
+            const entity = await res.json()
+
+            if (!LtiEntityType.is(entity))
+              throw new Error(
+                `Unexpected entity type. Got: ${JSON.stringify(entity)}`
+              )
+
             // console.log('entity: ', entity)
             resolve(entity)
           })

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 
 import jwt from 'jsonwebtoken'
 import path from 'path'
-import { getMariaDB } from './mariadb'
+import { getMariaDb } from './mariadb'
 import config from '../utils/config'
 import { createAndLogError } from '../utils/logger'
 import urljoin from 'url-join'
@@ -14,7 +14,6 @@ import { LtiCustomClaim } from './types/lti-custom-claim'
 import * as t from 'io-ts'
 import { createAccessToken } from './util/create-acccess-token'
 import { AccessTokenType, type AccessToken } from './types/access-token'
-import type { Entity } from './types/entity'
 import { getEdusharingInfo } from './edusharing/get-edusharing-info'
 
 const ltijsKey = config.LTIJS_KEY
@@ -128,11 +127,11 @@ export async function onConnect(
         `Invalid LTI custom claim during launch of Serlo editor. Was: ${JSON.stringify(custom)}`
       )
 
-    const mariaDB = getMariaDB()
+    const mariaDb = await getMariaDb()
 
     // First open -> Create new row in database
     // Not first open -> Get existing row in database
-    const entity = await mariaDB.createOrGetEntity({
+    const entity = await mariaDb.createOrGetEntity({
       custom,
       idToken,
       platform,
@@ -270,29 +269,15 @@ export async function getEntity(
   next: NextFunction
 ) {
   try {
-    const database = getMariaDB()
-
     const accessToken = req.query.accessToken
     if (typeof accessToken !== 'string')
       throw createAndLogError('Get entity: Missing access token')
 
     const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
 
-    // Get json from database with decodedAccessToken.entityId
-    const entity = await database.fetchOptional<Entity | null>(
-      `
-      SELECT
-        id,
-        lti_resource_link_id,
-        lti_custom_claim_id,
-        content
-      FROM
-        lti_entity
-      WHERE
-        id = ?
-    `,
-      [String(decodedAccessToken.entityId)]
-    )
+    const mariaDb = await getMariaDb()
+
+    const entity = await mariaDb.getEntity(decodedAccessToken.entityId)
 
     res.json(entity)
   } catch (error) {
@@ -329,7 +314,6 @@ export async function putEntity(
 }
 
 async function saveEntityInOurDatabase(req: Request) {
-  const database = getMariaDB()
   const messagePrefix = 'Saving entity to database'
 
   const accessToken = req.body.accessToken
@@ -348,11 +332,13 @@ async function saveEntityInOurDatabase(req: Request) {
       `${messagePrefix}: Access token grants no right to modify content`
     )
 
+  const mariaDb = await getMariaDb()
+
   // Modify entity with decodedAccessToken.entityId in database
-  await database.mutate('UPDATE lti_entity SET content = ? WHERE id = ?', [
-    JSON.stringify(req.body.editorState),
+  await mariaDb.setContent(
     decodedAccessToken.entityId,
-  ])
+    JSON.stringify(req.body.editorState)
+  )
 }
 
 async function saveEntityInEdusharing(
