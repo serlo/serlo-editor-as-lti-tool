@@ -35,12 +35,14 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
 
   const [isEdusharingDeployment, setIsEdusharingDeployment] =
     useState<boolean>(false)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    fetchIsEdusharingDeployment().then((response) =>
+    fetchIsEdusharingDeployment().then((response) => {
       setIsEdusharingDeployment(response)
-    )
-  }, [isEdusharingDeployment])
+      setReady(true)
+    })
+  }, [])
 
   const savePendingRef = useRef<boolean>(false)
 
@@ -105,6 +107,10 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
     }
 
     return defaultPlugins
+  }
+
+  if (!ready) {
+    return <div>Loading...</div>
   }
 
   return (
