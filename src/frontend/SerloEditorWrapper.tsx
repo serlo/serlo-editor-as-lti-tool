@@ -130,16 +130,7 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   )
 }
 
-function fetchIsEdusharingDeployment() {
-  return new Promise<boolean>((resolve, reject) => {
-    fetch('/edusharing-embed/is-edusharing-deployment', {
-      method: 'GET',
-    })
-      .then(async (res) => {
-        resolve(await res.json())
-      })
-      .catch(() => {
-        reject()
-      })
-  })
+async function fetchIsEdusharingDeployment(): Promise<boolean> {
+  const res = await fetch('/edusharing-embed/is-edusharing-deployment')
+  return await res.json()
 }
