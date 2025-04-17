@@ -6,10 +6,10 @@ services:
   mariadb:
     image: mariadb:10 # Match major version on Uberspace
     environment:
+      # Create database 'serlo'
       - MARIADB_DATABASE=serlo
+
       - MARIADB_PASSWORD=secret
       - MARIADB_ROOT_PASSWORD=secret
-    volumes:
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     ports:
       - 3306:3306
