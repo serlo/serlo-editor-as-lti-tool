@@ -62,7 +62,7 @@ Scenario(
     I.amOnPage(url.toString())
 
     I.see(
-      'Fehler: Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.'
+      'Fehler: Der Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.'
     )
   }
 )

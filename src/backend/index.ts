@@ -8,7 +8,6 @@ import { registerLtiPlatforms } from './util/register-lti-platforms'
 import config from '../utils/config'
 import * as edusharing from './edusharing'
 import * as editor from './editor-route-handlers'
-import * as ai from './ai-route-handlers'
 import * as media from './media-route-handlers'
 import { logger } from '../utils/logger'
 import { getStateWorker } from './state-worker.js'
@@ -117,10 +116,8 @@ async function setup() {
   app.get('/media/presigned-url', media.presignedUrl)
   app.use(media.proxyMiddleware)
 
-  app.post('/ai/generate-content', ai.generateContent)
-  app.post('/ai/change-content', ai.changeContent)
-
-  Sentry.setupExpressErrorHandler(app)
+  // app.post('/ai/generate-content', ai.generateContent)
+  // app.post('/ai/change-content', ai.changeContent)
 
   // Successful LTI resource link launch
   // @ts-expect-error @types/ltijs
@@ -129,6 +126,8 @@ async function setup() {
   // Successful LTI deep linking launch
   // @ts-expect-error @types/ltijs
   ltijs.onDeepLinking(editor.onDeepLinking)
+
+  Sentry.setupExpressErrorHandler(app)
 
   await ltijs.deploy()
 

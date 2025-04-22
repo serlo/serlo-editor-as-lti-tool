@@ -29,9 +29,9 @@
     "generate-secret": "dotenvx run -- tsx src/utils/generate-secret.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.782.0",
+    "@aws-sdk/client-s3": "^3.787.0",
     "@aws-sdk/s3-request-presigner": "^3.777.0",
-    "@dotenvx/dotenvx": "^1.39.1",
+    "@dotenvx/dotenvx": "^1.40.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@sentry/node": "^9.8.0",
     "@serlo/editor": "0.25.1",
@@ -64,9 +64,9 @@
     "@types/react-dom": "^18.3.1",
     "@types/url-join": "^4.0.3",
     "@types/uuid": "^10.0.0",
-    "@vitejs/plugin-react-swc": "^3.8.0",
+    "@vitejs/plugin-react-swc": "^3.8.1",
     "autoprefixer": "^10.4.20",
-    "codeceptjs": "^3.6.10",
+    "codeceptjs": "^3.7.3",
     "codeceptjs-chai": "^2.3.5",
     "esbuild": "^0.25.1",
     "eslint": "^9.22.0",
