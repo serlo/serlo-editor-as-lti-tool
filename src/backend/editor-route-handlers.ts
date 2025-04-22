@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express'
 
 import jwt from 'jsonwebtoken'
 import path from 'path'
-import { getMariaDB } from './mariadb'
+import { getMariaDb } from './mariadb'
 import config from '../utils/config'
 import { createAndLogError } from '../utils/logger'
 import urljoin from 'url-join'
@@ -41,7 +41,7 @@ export async function deeplinkingDone(
       // Important: Only use lowercase letters in key. When I used uppercase letters they were changed to lowercase letters in the LTI Resource Link launch on itslearning.
       id: ltiCustomClaimId,
       type: req.query['type']?.toString(),
-      deeplinkingidtoken: JSON.stringify(idToken),
+      createdbyuser: idToken.user,
     }
 
     // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
@@ -104,8 +104,8 @@ export async function onConnect(
       )
 
     // The LTI platform id
-    const iss = idToken.iss
-    if (!iss)
+    const platform = idToken.iss
+    if (!platform)
       throw createAndLogError(
         'iss missing in idToken during launch of Serlo editor'
       )
@@ -117,7 +117,7 @@ export async function onConnect(
         'sub missing in idToken during launch of Serlo editor'
       )
 
-    const isEdusharing = iss.includes('edu-sharing')
+    const isEdusharing = platform.includes('edu-sharing')
 
     // On Moodle 4.5.1+ (Build: 20250124) and edu-sharing we don't have a LTI deep linking launch before this launch. So, we might not get any 'custom' values here.
     const custom: unknown = idToken.platformContext?.custom
@@ -135,7 +135,7 @@ export async function onConnect(
     const entity = await stateWorker.createOrGetEntity({
       custom,
       idToken,
-      iss,
+      platform,
       resourceLinkId,
       user,
     })
@@ -297,7 +297,6 @@ export async function putEntity(
 }
 
 async function saveEntityInOurDatabase(req: Request) {
-  const database = getMariaDB()
   const messagePrefix = 'Saving entity to database'
 
   const accessToken = req.body.accessToken
@@ -316,9 +315,10 @@ async function saveEntityInOurDatabase(req: Request) {
       `${messagePrefix}: Access token grants no right to modify content`
     )
 
+  const mariaDb = await getMariaDb()
+
   // Modify entity with decodedAccessToken.entityId in database
-  await database.mutate('UPDATE lti_entity SET content = ? WHERE id = ?', [
-    JSON.stringify(req.body.editorState),
+  await mariaDb.setContent(
     decodedAccessToken.entityId,
   ])
 }

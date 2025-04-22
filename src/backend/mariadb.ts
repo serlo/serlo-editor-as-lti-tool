@@ -1,6 +1,4 @@
 import {
-  type Pool,
-  type PoolConnection,
   type RowDataPacket,
   type ResultSetHeader,
   createPool,
@@ -8,110 +6,53 @@ import {
 import config from '../utils/config'
 import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
-import type { Entity } from './types/entity'
+import { LtiEntityType } from './types/entity'
 import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
-import { Request, Response, NextFunction } from 'express'
-import { logger } from '../utils/logger'
-import * as Sentry from '@sentry/node'
-import jwt from 'jsonwebtoken'
-import { AccessToken } from './types/access-token'
+import path from 'path'
+import { readFile } from 'fs/promises'
+import { LtiCustomClaimType } from './types/lti-custom-claim'
+import { createAndLogError } from '../utils/logger'
 
-let database: Database | null = null
+const isInitialized = false
+const pool = createPool(config.MYSQL_URI)
 
-export function getMariaDB() {
-  if (config.IS_EDUSHARING_DEPLOYMENT) {
-    const error = new Error(
-      'Wrong execution path: MariaDB is not supposed to be called in edu-sharing deployment'
-    )
-    Sentry.captureException(error)
-    throw error
-  }
-  if (database === null) {
-    // If IS_EDUSHARING_DEPLOYMENT is false, MYSQL_URI will be set. See src/utils/config.ts
-    database = new Database(createPool(config.MYSQL_URI!))
-  }
-  return database
-}
-
-export class Database {
-  private state: DatabaseState
-  private pool: Pool
-
-  constructor(pool: Pool) {
-    this.pool = pool
-    this.state = { type: 'OutsideOfTransaction' }
-  }
-
-  async getEntity(req: Request, res: Response, next: NextFunction) {
-    try {
-      const database = getMariaDB()
-
-      const accessToken = req.query.accessToken
-      if (typeof accessToken !== 'string') {
-        const error = new Error('Get entity: Missing access token')
-        Sentry.captureException(error)
-        throw error
-      }
-
-      const decodedAccessToken = jwt.verify(
-        accessToken,
-        config.LTIJS_KEY
-      ) as AccessToken
-
-      // Get json from database with decodedAccessToken.entityId
-      const entity = await database.fetchOptional<Entity | null>(
-        `
-        SELECT
-          id,
-          resource_link_id,
-          custom_claim_id,
-          content
-        FROM
-          lti_entity
-        WHERE
-          id = ?
-      `,
-        [String(decodedAccessToken.entityId)]
-      )
-
-      logger.info('entity: ', entity)
-
-      res.json(entity)
-    } catch (error) {
-      // Forward error to express to handle error without crashing
-      // See: https://expressjs.com/en/guide/error-handling.html
-      next(error)
-    }
-  }
-
-  public async createOrGetEntity({
+const mariaDb = {
+  async createOrGetEntity({
     custom,
     idToken,
-    iss,
+    platform,
     resourceLinkId,
     user,
   }: {
     custom: unknown
     idToken: IdToken
-    iss: string
+    platform: string
     resourceLinkId: string
     user: string
   }) {
-    const mariaDB = getMariaDB()
+    const userWhenCreated = LtiCustomClaimType.is(custom)
+      ? custom.createdbyuser
+      : undefined
 
-    // Only exists when there was a LTI deep linking launch before
-    const idTokenWhenCreated = t
-      .type({ deeplinkingidtoken: t.string })
-      .is(custom)
-      ? custom.deeplinkingidtoken
-      : null
-
-    // Check if there is already a database entry with (iss, resource_link_id)
-    const existingEntity = await mariaDB.fetchOptional<Entity | null>(
-      'SELECT * FROM lti_entity WHERE resource_link_id = ? AND iss = ?',
-      [resourceLinkId, iss]
+    // Check if there is already a database entry
+    const [selectExistingEntityRows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM lti_entity WHERE lti_resource_link_id = ? AND lti_platform = ?',
+      [resourceLinkId, platform]
     )
+
+    if (selectExistingEntityRows.length > 1)
+      throw createAndLogError(
+        `Found multiple entities in database with lti_resource_link_id=${resourceLinkId} and lti_platform=${platform}`
+      )
+
+    const existingEntity = selectExistingEntityRows.at(0)
+
     if (existingEntity) {
+      if (!LtiEntityType.is(existingEntity))
+        throw createAndLogError(
+          `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(existingEntity)}`
+        )
+
       return existingEntity
     }
 
@@ -120,7 +61,7 @@ export class Database {
     // (B) A copy of an existing entity on edu-sharing
     // Here, we try to get an existing entity from edu-sharing. If none exists, we have (A) and set the initial content to null. If one exists, we have (B) and use the state to initialize the new entity in our database.
     // This is a workaround for a known limitation in LTI. See: https://www.imsglobal.org/lti-course-copy-road-nowhere
-    const initialContentString = iss.includes('edu-sharing')
+    const initialContentString = platform.includes('edu-sharing')
       ? await tryGetSerloEntityFromEdusharing(idToken, custom)
       : null
 
@@ -130,191 +71,77 @@ export class Database {
       : null
 
     // If there is no existing entity, create one
-    const insertionResult = await mariaDB.mutate(
-      'INSERT INTO lti_entity (iss, resource_link_id, custom_claim_id, edusharing_node_id, content, user_when_first_opened, id_token_when_first_opened, id_token_when_created) values (?, ?, ?, ?, ?, ?, ?, ?)',
+    const [resultSetHeader] = await pool.query<ResultSetHeader>(
+      'INSERT INTO lti_entity (lti_platform, lti_resource_link_id, lti_custom_claim_id, edusharing_node_id, content, lti_user_when_first_opened, lti_user_when_created) values (?, ?, ?, ?, ?, ?, ?)',
       [
-        iss,
+        platform,
         resourceLinkId,
         customClaimId,
         edusharingNodeId,
         initialContentString,
         user,
-        JSON.stringify(idToken),
-        idTokenWhenCreated,
+        userWhenCreated,
       ]
     )
 
-    const insertedEntity = await mariaDB.fetchOne<Entity>(
+    const [selectInsertedEntityRows] = await pool.query<RowDataPacket[]>(
       'SELECT * FROM lti_entity WHERE id = ?',
-      [insertionResult.insertId]
+      [resultSetHeader.insertId]
     )
+
+    const insertedEntity = selectInsertedEntityRows.at(0)
+
+    if (!insertedEntity)
+      throw createAndLogError('Failed to insert entity into mariadb')
+
+    if (!LtiEntityType.is(insertedEntity))
+      throw createAndLogError(
+        `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(insertedEntity)}`
+      )
+
     return insertedEntity
-  }
-
-  public async beginTransaction() {
-    if (this.state.type === 'OutsideOfTransaction') {
-      const transaction = await this.pool.getConnection()
-      await transaction.beginTransaction()
-
-      this.state = { type: 'InsideTransaction', transaction }
-    } else {
-      const { transaction } = this.state
-      const newDepth =
-        this.state.type === 'InsideSavepoint' ? this.state.depth + 1 : 0
-
-      await transaction.query(`SAVEPOINT _savepoint_${newDepth}`)
-
-      this.state = { type: 'InsideSavepoint', transaction, depth: newDepth }
-    }
-
-    let isComittedOrRollbacked = false
-
-    return {
-      commit: async () => {
-        if (!isComittedOrRollbacked) {
-          await this.commitLastTransaction()
-          isComittedOrRollbacked = true
-        }
-      },
-      rollback: async () => {
-        if (!isComittedOrRollbacked) {
-          await this.rollbackLastTransaction()
-          isComittedOrRollbacked = true
-        }
-      },
-    }
-  }
-
-  private async commitLastTransaction() {
-    if (this.state.type === 'OutsideOfTransaction') return
-
-    const { transaction } = this.state
-
-    if (this.state.type === 'InsideTransaction') {
-      await transaction.commit()
-      transaction.release()
-
-      this.state = { type: 'OutsideOfTransaction' }
-    } else {
-      const { depth } = this.state
-
-      await transaction.query(`RELEASE SAVEPOINT _savepoint_${depth}`)
-
-      this.state =
-        depth > 0
-          ? { type: 'InsideSavepoint', transaction, depth: depth - 1 }
-          : { type: 'InsideTransaction', transaction }
-    }
-  }
-
-  private async rollbackLastTransaction() {
-    if (this.state.type === 'OutsideOfTransaction') return
-
-    const { transaction } = this.state
-
-    if (this.state.type === 'InsideTransaction') {
-      await this.rollbackAllTransactions()
-    } else {
-      const { depth } = this.state
-
-      await transaction.query(`ROLLBACK TO SAVEPOINT _savepoint_${depth}`)
-
-      this.state =
-        depth > 0
-          ? { type: 'InsideSavepoint', transaction, depth: depth - 1 }
-          : { type: 'InsideTransaction', transaction }
-    }
-  }
-
-  public async rollbackAllTransactions() {
-    if (this.state.type === 'OutsideOfTransaction') return
-
-    const { transaction } = this.state
-
-    await transaction.rollback()
-    transaction.release()
-
-    this.state = { type: 'OutsideOfTransaction' }
-  }
-
-  public async fetchAll<T = unknown>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T[]> {
-    return this.execute<(T & RowDataPacket)[]>(sql, params)
-  }
-
-  public async fetchOptional<T = unknown>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T | null> {
-    const [result] = await this.execute<(T & RowDataPacket)[]>(sql, params)
-
-    return result ?? null
-  }
-
-  public async fetchOne<T = unknown>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T> {
-    const result = await this.fetchOptional<T>(sql, params)
-
-    if (result == null) throw new Error('Expected one row, no row found')
-
-    return result
-  }
-
-  public async mutate(
-    sql: string,
-    params?: unknown[]
-  ): Promise<ResultSetHeader> {
-    return this.execute<ResultSetHeader>(sql, params)
-  }
-
-  public async close() {
-    await this.pool.end()
-  }
-
-  private async execute<T extends RowDataPacket[] | ResultSetHeader>(
-    sql: string,
-    params?: unknown[]
-  ): Promise<T> {
-    const numberOfTries = 10
-    const waitTime = 1000
-    for (let i = 0; i < numberOfTries; i++) {
-      try {
-        if (this.state.type === 'OutsideOfTransaction') {
-          const [rows] = await this.pool.execute<T>(sql, params)
-
-          return rows
-        } else {
-          const [rows] = await this.state.transaction.execute<T>(sql, params)
-
-          return rows
-        }
-      } catch {
-        await new Promise((res) => setTimeout(res, waitTime))
-      }
-    }
-    throw new Error(
-      `Failed to execute command in mariadb database after ${numberOfTries} tries.`
+  },
+  async getEntity(id: number) {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `
+        SELECT
+          *
+        FROM
+          lti_entity
+        WHERE
+          id = ?
+      `,
+      [String(id)]
     )
+
+    const entity = rows.at(0)
+
+    if (!entity) throw createAndLogError(`Did not find entity with id=${id}`)
+
+    if (!LtiEntityType.is(entity))
+      throw createAndLogError(
+        `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(entity)}`
+      )
+
+    return entity
+  },
+  async setContent(id: number, content: unknown) {
+    await pool.query<ResultSetHeader>(
+      'UPDATE lti_entity SET content = ? WHERE id = ?',
+      [content, id]
+    )
+  },
+}
+
+export async function getMariaDb() {
+  if (!isInitialized) {
+    // Create tables if not exist
+    const initSql = await readFile(
+      path.join(__dirname, '../../db/createTablesIfNotExist.sql'),
+      'utf-8'
+    )
+    await pool.query(initSql)
   }
-}
 
-type DatabaseState = OutsideOfTransaction | InsideTransaction | InsideSavepoint
-
-interface OutsideOfTransaction {
-  type: 'OutsideOfTransaction'
-}
-
-interface InsideTransaction {
-  type: 'InsideTransaction'
-  transaction: PoolConnection
-}
-
-interface InsideSavepoint {
-  type: 'InsideSavepoint'
-  transaction: PoolConnection
-  depth: number
+  return mariaDb
 }
