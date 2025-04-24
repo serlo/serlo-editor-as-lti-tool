@@ -71,10 +71,8 @@ $ nano .env # change 'localhost' to 'host.docker.internal'
 $ docker run --env-file .env --add-host host.docker.internal:host-gateway serlo-editor-as-lti-tool
 ```
 
-To publish a new docker image, just change the version at package.json and push
-to branch `staging`.
-
-TODO
+To publish a new docker image, just change the version at `package.json` and
+push to branch `staging`.
 
 # .env files in deployments
 
