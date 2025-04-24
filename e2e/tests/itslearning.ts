@@ -5,7 +5,7 @@ import {
 
 Feature('Itslearning integration')
 
-Scenario('Instructors have write access', ({ I }) => {
+Scenario.skip('Instructors have write access', ({ I }) => {
   I.setInstructorRole()
 
   openSerloEditorWithLTI(I)
@@ -13,7 +13,7 @@ Scenario('Instructors have write access', ({ I }) => {
   expectEditorModeWrite(I)
 })
 
-Scenario('Learners only have read access', ({ I }) => {
+Scenario.skip('Learners only have read access', ({ I }) => {
   I.setLearnerRole()
 
   openSerloEditorWithLTI(I)

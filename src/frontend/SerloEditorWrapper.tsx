@@ -6,7 +6,6 @@ import {
 } from '@serlo/editor'
 import { jwtDecode } from 'jwt-decode'
 import React, { useCallback, useRef } from 'react'
-import config from '../utils/config'
 
 interface SerloContentProps {
   initialState: SerloEditorProps['initialState']
@@ -40,15 +39,17 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
 
   const save = useCallback(
     (newState: unknown) => {
+      if (!accessToken) throw new Error('Missing access token')
+
       savePendingRef.current = false
       fetch('/entity', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
           Authorization: `Bearer ${ltik}`,
+          'Content-Type': 'application/json;charset=utf-8',
+          'X-Access-Token': accessToken,
         },
         body: JSON.stringify({
-          accessToken,
           editorState: newState,
         }),
       }).then((res) => {
@@ -79,21 +80,11 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
     const { platformUrl } = jwtDecode(ltik) as Ltik
     const onEdusharing = platformUrl.includes('edu-sharing')
     if (onEdusharing) {
-      const edusharingDefaultPlugins = [
+      return [
         ...defaultPlugins,
         EditorPluginType.EdusharingAsset,
         EditorPluginType.SerloInjection,
       ]
-
-      if (config.IS_EDUSHARING_DEPLOYMENT) {
-        return edusharingDefaultPlugins.filter(
-          (plugin) =>
-            plugin !== EditorPluginType.Video &&
-            plugin !== EditorPluginType.Image
-        )
-      }
-
-      return edusharingDefaultPlugins
     }
 
     return defaultPlugins

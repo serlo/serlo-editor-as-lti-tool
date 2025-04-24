@@ -7,13 +7,15 @@ import config from '../utils/config'
 import { IdToken } from './types/idtoken'
 import * as t from 'io-ts'
 import { LtiEntityType } from './types/entity'
-import { tryGetSerloEntityFromEdusharing } from './edusharing/try-get-serlo-content-from-edusharing'
 import path from 'path'
 import { readFile } from 'fs/promises'
 import { LtiCustomClaimType } from './types/lti-custom-claim'
 import { createAndLogError } from '../utils/logger'
+import { edusharingApi } from './edusharing/edusharing-api'
 
 const isInitialized = false
+
+if (!config.MYSQL_URI) throw createAndLogError('MYSQL_URI is missing')
 const pool = createPool(config.MYSQL_URI)
 
 const mariaDb = {
@@ -53,7 +55,7 @@ const mariaDb = {
           `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(existingEntity)}`
         )
 
-      return existingEntity
+      return { ...existingEntity, id: existingEntity.id.toString() }
     }
 
     // If on edu-sharing and if we do not find an existing entity in our database we need to check if this either:
@@ -61,9 +63,27 @@ const mariaDb = {
     // (B) A copy of an existing entity on edu-sharing
     // Here, we try to get an existing entity from edu-sharing. If none exists, we have (A) and set the initial content to null. If one exists, we have (B) and use the state to initialize the new entity in our database.
     // This is a workaround for a known limitation in LTI. See: https://www.imsglobal.org/lti-course-copy-road-nowhere
-    const initialContentString = platform.includes('edu-sharing')
-      ? await tryGetSerloEntityFromEdusharing(idToken, custom)
-      : null
+    const initialContentString = await getInitialContent(
+      platform,
+      idToken,
+      custom
+    )
+    async function getInitialContent(
+      platform: string,
+      idToken: IdToken,
+      custom: unknown
+    ) {
+      if (!platform.includes('edu-sharing')) {
+        return null
+      }
+
+      try {
+        const entity = await edusharingApi.getEntity(idToken, custom)
+        return entity.content
+      } catch {
+        return null
+      }
+    }
 
     const customClaimId = t.type({ id: t.string }).is(custom) ? custom.id : null
     const edusharingNodeId = t.type({ nodeId: t.string }).is(custom)
@@ -99,7 +119,7 @@ const mariaDb = {
         `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(insertedEntity)}`
       )
 
-    return insertedEntity
+    return { ...insertedEntity, id: insertedEntity.id.toString() }
   },
   async getEntity(id: number) {
     const [rows] = await pool.query<RowDataPacket[]>(
@@ -123,7 +143,7 @@ const mariaDb = {
         `Unexpected type retrieved from mariadb entity. Got: ${JSON.stringify(entity)}`
       )
 
-    return entity
+    return { ...entity, id: entity.id.toString() }
   },
   async setContent(id: number, content: unknown) {
     await pool.query<ResultSetHeader>(

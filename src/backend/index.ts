@@ -10,6 +10,7 @@ import * as edusharing from './edusharing'
 import * as editor from './editor-route-handlers'
 import * as media from './media-route-handlers'
 import { logger } from '../utils/logger'
+import * as edusharingDeployment from './edusharing/edusharing-deployment'
 
 async function setup() {
   ltijs.setup(
@@ -80,10 +81,20 @@ async function setup() {
   app.get('/deeplinking-done', editor.deeplinkingDone)
 
   // Get content json
-  app.get('/entity', editor.getEntity)
+  app.get(
+    '/entity',
+    config.IS_EDUSHARING_DEPLOYMENT
+      ? edusharingDeployment.getEntity
+      : editor.getEntity
+  )
 
   // Save content json
-  app.put('/entity', editor.putEntity)
+  app.put(
+    '/entity',
+    config.IS_EDUSHARING_DEPLOYMENT
+      ? edusharingDeployment.putEntity
+      : editor.putEntity
+  )
 
   // Start edu-sharing embed flow for embedding edu-sharing content into the editor
   // Called when user clicks on "embed content from edusharing"

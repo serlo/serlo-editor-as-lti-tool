@@ -1,6 +1,5 @@
 import * as t from 'io-ts'
 import { failure } from 'io-ts/lib/PathReporter'
-import { logger } from './logger'
 
 // See https://github.com/gcanti/io-ts-types/blob/master/src/NonEmptyString.ts
 const NonEmptyString = new t.Type<string, string, unknown>(
@@ -96,7 +95,7 @@ const IOEnv = t.union([
   ProductionEnvType,
 ])
 
-export const decodedConfig = IOEnv.decode(process.env)
+const decodedConfig = IOEnv.decode(process.env)
 
 if (decodedConfig._tag === 'Left') {
   throw new Error(
@@ -109,12 +108,6 @@ const config = decodedConfig.right
 if (!config.MYSQL_URI && !config.IS_EDUSHARING_DEPLOYMENT) {
   throw new Error(
     'Either MYSQL_URI is set or IS_EDUSHARING_DEPLOYMENT is set to true'
-  )
-}
-
-if (config.MYSQL_URI && config.IS_EDUSHARING_DEPLOYMENT) {
-  logger.info(
-    'MYSQL_URI and IS_EDUSHARING_DEPLOYMENT are both set! Notice that the data are going to be stored ONLY at Edusharing.'
   )
 }
 
