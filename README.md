@@ -118,21 +118,6 @@ B. CLI:
    `s3cmd get s3://edtr-env/edtrdev/.env .env.edtrdev`, change it and upload it
    v.g. `s3cmd put .env.edtrdev s3://edtr-env/edtrdev/.env`.
 
-# MariaDB Dump
-
-If it is important for development to have something already existent in the
-MariaDB, you can first add the content, and then dump it with and commit the
-result in `docker-entrypoint-initdb.d`.
-
-```console
-$ yarn mariadb-reset # that way you are sure the database will be in the initial state in the next step
-$ yarn mariadb # Go to the database and change whatever you need. Alternatively you can write a migration script.
-$ yarn mariadb-dump # That way you don't need to change ./docker-entrypoint-initdb.d/001-init.sql by hand
-$ git add ./docker-entrypoint-initdb.d
-$ git commit
-$ git push
-```
-
 # Embed Serlo editor in iframe
 
 Iframes provide security to the host page but can limit access to required

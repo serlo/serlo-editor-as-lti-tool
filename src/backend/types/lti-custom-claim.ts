@@ -6,7 +6,7 @@ export const LtiCustomClaimType = t.intersection([
   }),
   t.partial({
     type: t.string,
-    deeplinkingidtoken: t.string,
+    createdbyuser: t.string,
   }),
 ])
 
