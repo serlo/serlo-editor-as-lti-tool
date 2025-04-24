@@ -1,8 +1,8 @@
 import { SerloEditorProps, SerloRendererProps } from '@serlo/editor'
 import { useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import type { AccessToken } from '../../backend/types/access-token'
-import { LtiEntityType, type LtiEntity } from '../../backend/types/entity'
+import { AccessTokenType } from '../../backend/types/access-token'
+import { GetEntityBody, GetEntityBodyType } from '../types/get-entity-body'
 
 export type AppState =
   | { type: 'fetching-content' }
@@ -50,7 +50,12 @@ export function useAppState() {
       return
     }
 
-    const decodedAccessToken = jwtDecode(accessToken) as AccessToken
+    const decodedAccessToken = jwtDecode(accessToken)
+    if (!AccessTokenType.is(decodedAccessToken))
+      throw new Error(
+        `Unexpected type of access token. Got: ${JSON.stringify(decodedAccessToken)}`
+      )
+
     const mode: 'read' | 'write' = decodedAccessToken.accessRight
 
     fetchEntity(accessToken, ltik)
@@ -70,31 +75,36 @@ export function useAppState() {
       })
 
     function fetchEntity(accessToken: string, ltik: string) {
-      return new Promise<LtiEntity>((resolve, reject) => {
-        const queryString = new URLSearchParams()
-        queryString.append('accessToken', accessToken)
-
-        fetch('/entity?' + queryString, {
+      return new Promise<GetEntityBody>((resolve, reject) => {
+        fetch('/entity', {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${ltik}`,
+            'X-Access-Token': accessToken,
+            'Content-Type': 'application/json;charset=utf-8',
           },
         })
           .then(async (res) => {
-            if (res.status !== 200) reject()
+            if (res.status !== 200) {
+              reject(
+                new Error(
+                  `Get entity request failed. Status code: ${res.status}`
+                )
+              )
+              return
+            }
 
             const entity = await res.json()
 
-            if (!LtiEntityType.is(entity))
+            if (!GetEntityBodyType.is(entity))
               throw new Error(
-                `Unexpected entity type. Got: ${JSON.stringify(entity)}`
+                `Unexpected response body for GET /entity. Got: ${JSON.stringify(entity)}`
               )
 
-            // console.log('entity: ', entity)
             resolve(entity)
           })
           .catch(() => {
-            reject()
+            reject(new Error(`Get entity request failed`))
           })
       })
     }

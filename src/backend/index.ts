@@ -10,7 +10,7 @@ import * as edusharing from './edusharing'
 import * as editor from './editor-route-handlers'
 import * as media from './media-route-handlers'
 import { logger } from '../utils/logger'
-import { getStateWorker } from './state-worker.js'
+import * as edusharingDeployment from './edusharing/edusharing-deployment'
 
 async function setup() {
   ltijs.setup(
@@ -51,8 +51,7 @@ async function setup() {
     '/edusharing-embed/keys',
     // disage ai to make it easier to develop, revert afterwards
     '/ai/generate-content',
-    '/ai/change-content',
-    '/edusharing-embed/is-edusharing-deployment'
+    '/ai/change-content'
   )
 
   // since whitelist is not allowing wildcards we ignore the invalidToken event for selected routes
@@ -82,10 +81,20 @@ async function setup() {
   app.get('/deeplinking-done', editor.deeplinkingDone)
 
   // Get content json
-  app.get('/entity', getStateWorker().getEntity)
+  app.get(
+    '/entity',
+    config.IS_EDUSHARING_DEPLOYMENT
+      ? edusharingDeployment.getEntity
+      : editor.getEntity
+  )
 
   // Save content json
-  app.put('/entity', editor.putEntity)
+  app.put(
+    '/entity',
+    config.IS_EDUSHARING_DEPLOYMENT
+      ? edusharingDeployment.putEntity
+      : editor.putEntity
+  )
 
   // Start edu-sharing embed flow for embedding edu-sharing content into the editor
   // Called when user clicks on "embed content from edusharing"
@@ -108,10 +117,6 @@ async function setup() {
 
   // Get edu-sharing embed html snippet
   app.get('/edusharing-embed/get', edusharing.get)
-
-  app.get('/edusharing-embed/is-edusharing-deployment', (_, response) => {
-    response.send(config.IS_EDUSHARING_DEPLOYMENT)
-  })
 
   app.get('/media/presigned-url', media.presignedUrl)
   app.use(media.proxyMiddleware)

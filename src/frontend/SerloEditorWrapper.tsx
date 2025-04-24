@@ -5,7 +5,7 @@ import {
   type SerloEditorProps,
 } from '@serlo/editor'
 import { jwtDecode } from 'jwt-decode'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useRef } from 'react'
 
 interface SerloContentProps {
   initialState: SerloEditorProps['initialState']
@@ -33,32 +33,23 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   const testingSecret = urlParams.get('testingSecret')
   const accessToken = urlParams.get('accessToken')
 
-  const [isEdusharingDeployment, setIsEdusharingDeployment] =
-    useState<boolean>(false)
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    fetchIsEdusharingDeployment().then((response) => {
-      setIsEdusharingDeployment(response)
-      setReady(true)
-    })
-  }, [])
-
   const savePendingRef = useRef<boolean>(false)
 
   const saveTimeoutRef = useRef<number | undefined>(undefined)
 
   const save = useCallback(
     (newState: unknown) => {
+      if (!accessToken) throw new Error('Missing access token')
+
       savePendingRef.current = false
       fetch('/entity', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
           Authorization: `Bearer ${ltik}`,
+          'Content-Type': 'application/json;charset=utf-8',
+          'X-Access-Token': accessToken,
         },
         body: JSON.stringify({
-          accessToken,
           editorState: newState,
         }),
       }).then((res) => {
@@ -89,28 +80,14 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
     const { platformUrl } = jwtDecode(ltik) as Ltik
     const onEdusharing = platformUrl.includes('edu-sharing')
     if (onEdusharing) {
-      const edusharingDefaultPlugins = [
+      return [
         ...defaultPlugins,
         EditorPluginType.EdusharingAsset,
         EditorPluginType.SerloInjection,
       ]
-
-      if (isEdusharingDeployment) {
-        return edusharingDefaultPlugins.filter(
-          (plugin) =>
-            plugin !== EditorPluginType.Video &&
-            plugin !== EditorPluginType.Image
-        )
-      }
-
-      return edusharingDefaultPlugins
     }
 
     return defaultPlugins
-  }
-
-  if (!ready) {
-    return <div>Loading...</div>
   }
 
   return (
@@ -128,9 +105,4 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
       }}
     </MemoSerloEditor>
   )
-}
-
-async function fetchIsEdusharingDeployment(): Promise<boolean> {
-  const res = await fetch('/edusharing-embed/is-edusharing-deployment')
-  return await res.json()
 }
