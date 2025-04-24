@@ -145,8 +145,8 @@ export class EdusharingServer {
       })
     })
 
-    // Currently unused
     this.app.get('/edu-sharing/rest/ltiplatform/v13/content', (_req, res) => {
+      logger.info('Get content request')
       res.json(this.content)
     })
 
@@ -157,6 +157,7 @@ export class EdusharingServer {
       '/edu-sharing/rest/ltiplatform/v13/content',
       upload.single('file'),
       (req, res) => {
+        logger.info('Post content request')
         const comment = req.query['versionComment'] ?? null
         if (!req.file) {
           res.sendStatus(400).send('req.file was missing')
