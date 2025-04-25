@@ -39,6 +39,14 @@ export const edusharingApi = {
 
     const stringifiedDocumentState = await edusharingResponse.text()
 
+    try {
+      JSON.parse(stringifiedDocumentState)
+    } catch {
+      throw createAndLogError(
+        `Content from edu-sharing is not valid JSON. Got: ${stringifiedDocumentState}`
+      )
+    }
+
     return { id: nodeId, content: stringifiedDocumentState }
   },
   async putEntity(contentString: string, res: Response) {

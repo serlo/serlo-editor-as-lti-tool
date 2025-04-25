@@ -63,11 +63,7 @@ const mariaDb = {
     // (B) A copy of an existing entity on edu-sharing
     // Here, we try to get an existing entity from edu-sharing. If none exists, we have (A) and set the initial content to null. If one exists, we have (B) and use the state to initialize the new entity in our database.
     // This is a workaround for a known limitation in LTI. See: https://www.imsglobal.org/lti-course-copy-road-nowhere
-    const initialContentString = await getInitialContent(
-      platform,
-      idToken,
-      custom
-    )
+    const initialContent = await getInitialContent(platform, idToken, custom)
     async function getInitialContent(
       platform: string,
       idToken: IdToken,
@@ -98,7 +94,7 @@ const mariaDb = {
         resourceLinkId,
         customClaimId,
         edusharingNodeId,
-        initialContentString,
+        initialContent,
         user,
         userWhenCreated,
       ]
@@ -145,7 +141,7 @@ const mariaDb = {
 
     return { ...entity, id: entity.id.toString() }
   },
-  async setContent(id: number, content: unknown) {
+  async setContent(id: number, content: string) {
     await pool.query<ResultSetHeader>(
       'UPDATE lti_entity SET content = ? WHERE id = ?',
       [content, id]
