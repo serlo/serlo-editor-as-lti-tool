@@ -74,7 +74,8 @@ const mariaDb = {
       }
 
       try {
-        const entity = await edusharingApi.getEntity(idToken, custom)
+        const entity = await edusharingApi.tryGetEntity(idToken, custom)
+        if (!entity) return null
         return entity.content
       } catch {
         return null

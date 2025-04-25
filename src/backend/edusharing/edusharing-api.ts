@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken'
 import { createAndLogError } from '../../utils/logger'
 
 export const edusharingApi = {
-  async getEntity(idToken: IdToken, custom: unknown) {
+  async tryGetEntity(idToken: IdToken, custom: unknown) {
     const {
       appId,
       dataToken,
@@ -39,13 +39,10 @@ export const edusharingApi = {
 
     const stringifiedDocumentState = await edusharingResponse.text()
 
-    try {
-      JSON.parse(stringifiedDocumentState)
-    } catch {
-      throw createAndLogError(
-        `Content from edu-sharing is not valid JSON. Got: ${stringifiedDocumentState}`
-      )
-    }
+    // No exising content
+    const noEntityExists = stringifiedDocumentState.length === 0
+    // No throw and error logging here because this is an expected case
+    if (noEntityExists) return null
 
     return { id: nodeId, content: stringifiedDocumentState }
   },

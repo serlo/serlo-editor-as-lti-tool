@@ -131,15 +131,23 @@ export async function onConnect(
 
     const mariadb = await getMariaDb()
 
-    const entity = config.IS_EDUSHARING_DEPLOYMENT
-      ? await edusharingApi.getEntity(idToken, custom)
-      : await mariadb.createOrGetEntity({
-          custom,
-          idToken,
-          platform,
-          resourceLinkId,
-          user,
-        })
+    const entity = await getEntity(resourceLinkId)
+    async function getEntity(resourceLinkId: string) {
+      if (config.IS_EDUSHARING_DEPLOYMENT) {
+        const entity = await edusharingApi.tryGetEntity(idToken, custom)
+        if (!entity)
+          throw createAndLogError('Failed to get entity from edu-sharing')
+        return entity
+      }
+
+      return await mariadb.createOrGetEntity({
+        custom,
+        idToken,
+        platform,
+        resourceLinkId,
+        user,
+      })
+    }
 
     const editorMode = getEditorMode(idToken, custom, isEdusharing)
 
