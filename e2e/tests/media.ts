@@ -1,18 +1,21 @@
 /* eslint-disable no-console */
 import { HeadObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import config from '../../src/utils/config'
+import { hasS3Env } from '../../src/backend/media-route-handlers'
 
 Feature('Media upload and proxy')
 
-const s3Client = new S3Client({
-  region: config.BUCKET_REGION,
-  credentials: {
-    accessKeyId: config.BUCKET_ACCESS_KEY_ID,
-    secretAccessKey: config.BUCKET_SECRET_ACCESS_KEY,
-  },
-  endpoint: config.S3_ENDPOINT,
-  forcePathStyle: true,
-})
+const s3Client = hasS3Env
+  ? new S3Client({
+      region: config.BUCKET_REGION,
+      credentials: {
+        accessKeyId: config.BUCKET_ACCESS_KEY_ID,
+        secretAccessKey: config.BUCKET_SECRET_ACCESS_KEY,
+      },
+      endpoint: config.S3_ENDPOINT,
+      forcePathStyle: true,
+    })
+  : undefined
 
 const uploadedKeys: string[] = []
 
@@ -85,7 +88,7 @@ if (config.BUCKET_ACCESS_KEY_ID !== 'placeholder') {
         Key: key,
       }
       const headCommand = new HeadObjectCommand(inputValues)
-      const metaResponse = await s3Client.send(headCommand)
+      const metaResponse = await s3Client?.send(headCommand)
       I.assertEqual(
         JSON.stringify(metaResponse.Metadata),
         '{"content-type":"image/png","editorvariant":"test-uploads","parenthost":"localhost:3000","requesthost":"localhost:3000","userid":"test"}'
