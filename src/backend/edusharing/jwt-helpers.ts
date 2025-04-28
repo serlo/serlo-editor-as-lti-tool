@@ -93,7 +93,7 @@ export function signJwtWithBase64Key(
   payload: Omit<jwt.JwtPayload, 'iat'>,
   expireAfterSeconds?: number
 ) {
-  const defaultExpireAfterSeconds = 15
+  const defaultExpireAfterSeconds = 60
 
   return jwt.sign(
     { ...payload, iat: Math.floor(Date.now() / 1000) },

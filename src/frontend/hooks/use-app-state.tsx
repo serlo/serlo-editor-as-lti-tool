@@ -1,8 +1,8 @@
 import { SerloEditorProps, SerloRendererProps } from '@serlo/editor'
 import { useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { type AccessToken, type Entity } from '../../backend'
-import copyPluginToClipboardImage from '../assets/copy-plugin-to-clipboard.png'
+import { AccessTokenType } from '../../backend/types/access-token'
+import { GetEntityBody, GetEntityBodyType } from '../types/get-entity-body'
 
 export type AppState =
   | { type: 'fetching-content' }
@@ -50,41 +50,17 @@ export function useAppState() {
       return
     }
 
-    const decodedAccessToken = jwtDecode(accessToken) as AccessToken
+    const decodedAccessToken = jwtDecode(accessToken)
+    if (!AccessTokenType.is(decodedAccessToken))
+      throw new Error(
+        `Unexpected type of access token. Got: ${JSON.stringify(decodedAccessToken)}`
+      )
+
     const mode: 'read' | 'write' = decodedAccessToken.accessRight
 
     fetchEntity(accessToken, ltik)
       .then((entity) => {
-        if (entity.content === 'Invalid access token') {
-          setAppState({
-            type: 'error',
-            message: 'Fehler: Bitte öffne den Inhalt erneut.',
-          })
-          return
-        }
-
-        const resourceLinkIdFromDb = entity.resource_link_id
-        if (!resourceLinkIdFromDb || !resourceLinkIdFromUrl) {
-          setAppState({
-            type: 'error',
-            message: 'Error: resource_link_id was missing!',
-          })
-          return
-        }
-
-        if (resourceLinkIdFromDb !== resourceLinkIdFromUrl) {
-          setAppState({
-            type: 'error',
-            // In German because we expect the user to see it
-            message:
-              'Auf itslearning wurde eine Kopie erstellt. Leider ist dies aus technischen Gründen nicht möglich. Du kannst allerdings einen neuen Serlo Editor Inhalt auf itslearning erstellen und die gewünschten Inhalte per "Plugin in die Zwischenablage kopieren" & Strg-V dorthin übernehmen.',
-            imageURL: copyPluginToClipboardImage,
-          })
-          return
-        }
-
-        const content = JSON.parse(entity.content)
-        // console.log('content: ', content)
+        const content = entity.content ? JSON.parse(entity.content) : null
         setAppState({
           type: mode === 'write' ? 'editor' : 'static-renderer',
           content,
@@ -93,30 +69,42 @@ export function useAppState() {
       .catch(() => {
         setAppState({
           type: 'error',
-          message: 'Error: Failed to fetch entity from database.',
+          message:
+            'Fehler: Der Inhalt konnte nicht geladen werden. Versuche den Inhalt erneut über die Plattform zu öffnen.',
         })
       })
 
     function fetchEntity(accessToken: string, ltik: string) {
-      return new Promise<Entity>((resolve, reject) => {
-        const queryString = new URLSearchParams()
-        queryString.append('accessToken', accessToken)
-
-        fetch('/entity?' + queryString, {
+      return new Promise<GetEntityBody>((resolve, reject) => {
+        fetch('/entity', {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${ltik}`,
+            'X-Access-Token': accessToken,
+            'Content-Type': 'application/json;charset=utf-8',
           },
         })
           .then(async (res) => {
-            if (res.status !== 200) reject()
+            if (res.status !== 200) {
+              reject(
+                new Error(
+                  `Get entity request failed. Status code: ${res.status}`
+                )
+              )
+              return
+            }
 
-            const entity = (await res.json()) as Entity
-            // console.log('entity: ', entity)
+            const entity = await res.json()
+
+            if (!GetEntityBodyType.is(entity))
+              throw new Error(
+                `Unexpected response body for GET /entity. Got: ${JSON.stringify(entity)}`
+              )
+
             resolve(entity)
           })
           .catch(() => {
-            reject()
+            reject(new Error(`Get entity request failed`))
           })
       })
     }
