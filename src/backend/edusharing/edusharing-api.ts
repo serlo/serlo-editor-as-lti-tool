@@ -40,11 +40,12 @@ export const edusharingApi = {
 
     const stringifiedDocumentState = await edusharingResponse.text()
 
-    // No exising content
-    if (stringifiedDocumentState.length === 0)
-      return { id: nodeId, content: null }
+    const noContent = stringifiedDocumentState.length === 0
 
-    return { id: nodeId, content: stringifiedDocumentState }
+    return {
+      id: nodeId,
+      content: noContent ? null : stringifiedDocumentState,
+    }
   },
   async putContent(contentString: string, res: Response) {
     const {
