@@ -27,13 +27,7 @@ export async function getEntity(
 
     const idToken = res.locals.token as IdToken
 
-    const entity: GetEntityBody | null = await edusharingApi.tryGetEntity(
-      idToken,
-      custom
-    )
-
-    if (!entity)
-      throw createAndLogError('Failed to get entity from edu-sharing')
+    const entity: GetEntityBody = await edusharingApi.getEntity(idToken, custom)
 
     res.json(entity)
   } catch (error) {
@@ -67,7 +61,7 @@ export async function putEntity(
 
     const contentString = JSON.stringify(req.body.editorState)
 
-    await edusharingApi.putEntity(contentString, res)
+    await edusharingApi.putContent(contentString, res)
 
     res.sendStatus(200)
   } catch (error) {

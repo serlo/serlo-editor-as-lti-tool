@@ -3,9 +3,10 @@ import { IdToken } from '../types/idtoken'
 import { getEdusharingInfo } from './get-edusharing-info'
 import jwt from 'jsonwebtoken'
 import { createAndLogError } from '../../utils/logger'
+import type { GetEntityBody } from '../../frontend/types/get-entity-body'
 
 export const edusharingApi = {
-  async tryGetEntity(idToken: IdToken, custom: unknown) {
+  async getEntity(idToken: IdToken, custom: unknown): Promise<GetEntityBody> {
     const {
       appId,
       dataToken,
@@ -40,13 +41,12 @@ export const edusharingApi = {
     const stringifiedDocumentState = await edusharingResponse.text()
 
     // No exising content
-    const noEntityExists = stringifiedDocumentState.length === 0
-    // No throw and error logging here because this is an expected case
-    if (noEntityExists) return null
+    if (stringifiedDocumentState.length === 0)
+      return { id: nodeId, content: null }
 
     return { id: nodeId, content: stringifiedDocumentState }
   },
-  async putEntity(contentString: string, res: Response) {
+  async putContent(contentString: string, res: Response) {
     const {
       appId,
       dataToken,

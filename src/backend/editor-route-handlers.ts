@@ -129,16 +129,12 @@ export async function onConnect(
         `Invalid LTI custom claim during launch of Serlo editor. Was: ${JSON.stringify(custom)}`
       )
 
-    const mariadb = await getMariaDb()
-
     const entity = await getEntity(resourceLinkId)
     async function getEntity(resourceLinkId: string) {
       if (config.IS_EDUSHARING_DEPLOYMENT) {
-        const entity = await edusharingApi.tryGetEntity(idToken, custom)
-        if (!entity)
-          throw createAndLogError('Failed to get entity from edu-sharing')
-        return entity
+        return await edusharingApi.getEntity(idToken, custom)
       }
+      const mariadb = await getMariaDb()
 
       return await mariadb.createOrGetEntity({
         custom,
@@ -319,7 +315,7 @@ export async function putEntity(
     const isEdusharing = idToken.iss.includes('edu-sharing')
     if (isEdusharing) {
       edusharingApi
-        .putEntity(contentString, res)
+        .putContent(contentString, res)
         // Do not forward error to express. To the user, a failed save to edu-sharing is still considered successful.
         .catch(() => {})
     }
