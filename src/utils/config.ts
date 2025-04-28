@@ -36,12 +36,12 @@ const BaseEnv = {
   MYSQL_URI: t.union([t.string, t.undefined]),
   IS_EDUSHARING_DEPLOYMENT: BooleanOrUndefined,
   MONGODB_URI: NonEmptyString,
-  S3_ENDPOINT: NonEmptyString,
-  BUCKET_NAME: NonEmptyString,
-  BUCKET_REGION: NonEmptyString,
-  BUCKET_ACCESS_KEY_ID: NonEmptyString,
-  BUCKET_SECRET_ACCESS_KEY: NonEmptyString,
-  MEDIA_BASE_URL: NonEmptyString,
+  S3_ENDPOINT: t.string,
+  BUCKET_NAME: t.string,
+  BUCKET_REGION: t.string,
+  BUCKET_ACCESS_KEY_ID: t.string,
+  BUCKET_SECRET_ACCESS_KEY: t.string,
+  MEDIA_BASE_URL: t.string,
 }
 
 const LocalEnvType = t.type({

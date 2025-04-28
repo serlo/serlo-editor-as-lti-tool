@@ -118,8 +118,10 @@ async function setup() {
   // Get edu-sharing embed html snippet
   app.get('/edusharing-embed/get', edusharing.get)
 
-  app.get('/media/presigned-url', media.presignedUrl)
-  app.use(media.proxyMiddleware)
+  if (media.hasS3Env && media.proxyMiddleware) {
+    app.get('/media/presigned-url', media.presignedUrl)
+    app.use(media.proxyMiddleware)
+  }
 
   // app.post('/ai/generate-content', ai.generateContent)
   // app.post('/ai/change-content', ai.changeContent)

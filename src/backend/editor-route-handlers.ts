@@ -15,6 +15,7 @@ import { createAccessToken } from './util/create-acccess-token'
 import { edusharingApi } from './edusharing/edusharing-api'
 import { GetEntityBody } from '../frontend/types/get-entity-body'
 import { checkAccessToken } from './check-access-token'
+import { hasS3Env } from './media-route-handlers'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -153,6 +154,7 @@ export async function onConnect(
     searchParams.append('accessToken', accessToken)
     searchParams.append('resourceLinkId', resourceLinkId)
     searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
+    searchParams.append('assetUpload', hasS3Env)
     searchParams.append('ltik', ltik)
     searchParams.append('contextTitle', contextTitle ?? '')
     searchParams.append('title', title ?? '')

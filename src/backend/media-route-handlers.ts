@@ -11,11 +11,19 @@ import type { NextFunction, Request, Response } from 'express'
 import config from '../utils/config'
 import { createAndLogError } from '../utils/logger'
 
+export const hasS3Env =
+  config.S3_ENDPOINT &&
+  config.BUCKET_NAME &&
+  config.BUCKET_REGION &&
+  config.BUCKET_ACCESS_KEY_ID &&
+  config.BUCKET_SECRET_ACCESS_KEY &&
+  config.MEDIA_BASE_URL
+
 const endpoint = config.S3_ENDPOINT
 const bucketName = config.BUCKET_NAME
 
-const target = new URL(endpoint)
-target.pathname = bucketName
+const target = hasS3Env ? new URL(endpoint) : undefined
+if (target) target.pathname = bucketName
 
 /**
  * Minimal proxy implementation for media assets.
@@ -23,28 +31,32 @@ target.pathname = bucketName
  * We do this so the urls of the files don't need to change if we change our bucket.
  * It could also allow us to setup additional restictions in the future.
  */
-export const proxyMiddleware = createProxyMiddleware({
-  target: target.href,
-  changeOrigin: true,
-  pathFilter: (path) => path.startsWith('/media'),
-  pathRewrite: { '^/media': '' },
-  on: {
-    proxyRes: (proxyRes) => {
-      proxyRes.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
-      proxyRes.headers['Access-Control-Allow-Origin'] = '*'
-    },
-  },
-})
+export const proxyMiddleware = target
+  ? createProxyMiddleware({
+      target: target.href,
+      changeOrigin: true,
+      pathFilter: (path) => path.startsWith('/media'),
+      pathRewrite: { '^/media': '' },
+      on: {
+        proxyRes: (proxyRes) => {
+          proxyRes.headers['Cross-Origin-Resource-Policy'] = 'cross-origin'
+          proxyRes.headers['Access-Control-Allow-Origin'] = '*'
+        },
+      },
+    })
+  : undefined
 
-const s3Client = new S3Client({
-  region: config.BUCKET_REGION,
-  credentials: {
-    accessKeyId: config.BUCKET_ACCESS_KEY_ID,
-    secretAccessKey: config.BUCKET_SECRET_ACCESS_KEY,
-  },
-  endpoint,
-  forcePathStyle: true,
-})
+const s3Client = hasS3Env
+  ? new S3Client({
+      region: config.BUCKET_REGION,
+      credentials: {
+        accessKeyId: config.BUCKET_ACCESS_KEY_ID,
+        secretAccessKey: config.BUCKET_SECRET_ACCESS_KEY,
+      },
+      endpoint,
+      forcePathStyle: true,
+    })
+  : undefined
 
 const mimeTypeDecoder = t.union([
   t.literal('image/gif'),
@@ -61,6 +73,7 @@ export async function presignedUrl(
   res: Response,
   next: NextFunction
 ) {
+  if (!hasS3Env || !s3Client) return
   try {
     if (!mimeTypeDecoder.is(req.query.mimeType))
       throw createAndLogError('Missing or invalid mimeType')
