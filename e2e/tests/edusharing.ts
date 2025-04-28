@@ -51,7 +51,7 @@ Scenario(
     const originalAccessTokenHeader = originalAccessToken.split('.')[0]
     const originalAccessTokenSignature = originalAccessToken.split('.')[2]
     const decodedAccessToken = jwt.decode(originalAccessToken) as AccessToken
-    decodedAccessToken.entityId = 32973844792734
+    decodedAccessToken.entityId = '32973844792734'
     const tamperedJwtBody = Buffer.from(
       JSON.stringify(decodedAccessToken)
     ).toString('base64')

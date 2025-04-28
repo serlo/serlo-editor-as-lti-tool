@@ -26,10 +26,6 @@ set -a
 source .env
 set +a
 
-echo "Hopefully you have sett up initial data for MariaDB using the command at docker-entrypoint-initdb.d/001-init.sql change serlo for $USER"
-# mariadb < docker-entrypoint-initdb.d/001-init.sql doesn't work, find another way
-
-
 # Set up MongoDB
 if ! $(uberspace tools version show mongodb | grep -q '6.0'); then
   uberspace tools version use mongodb 6.0

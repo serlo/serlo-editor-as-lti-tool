@@ -14,11 +14,27 @@ const NonEmptyString = new t.Type<string, string, unknown>(
   String
 )
 
+const BooleanOrUndefined = new t.Type<boolean | undefined, string, unknown>(
+  'BooleanOrUndefined',
+  t.union([t.boolean, t.undefined]).is,
+  (input, context) => {
+    if (t.undefined.is(input) || input === '') {
+      return t.success(undefined)
+    }
+    if (t.string.is(input) && (input === 'true' || input === 'false')) {
+      return t.success(input === 'true')
+    }
+    return t.failure(input, context)
+  },
+  String
+)
+
 const BaseEnv = {
   EDITOR_URL: NonEmptyString,
   SERLO_EDITOR_TESTING_SECRET: t.string,
   LTIJS_KEY: NonEmptyString,
-  MYSQL_URI: NonEmptyString,
+  MYSQL_URI: t.union([t.string, t.undefined]),
+  IS_EDUSHARING_DEPLOYMENT: BooleanOrUndefined,
   MONGODB_URI: NonEmptyString,
   S3_ENDPOINT: NonEmptyString,
   BUCKET_NAME: NonEmptyString,
@@ -79,7 +95,7 @@ const IOEnv = t.union([
   ProductionEnvType,
 ])
 
-export const decodedConfig = IOEnv.decode(process.env)
+const decodedConfig = IOEnv.decode(process.env)
 
 if (decodedConfig._tag === 'Left') {
   throw new Error(
@@ -88,5 +104,11 @@ if (decodedConfig._tag === 'Left') {
 }
 
 const config = decodedConfig.right
+
+if (!config.MYSQL_URI && !config.IS_EDUSHARING_DEPLOYMENT) {
+  throw new Error(
+    'Either MYSQL_URI is set or IS_EDUSHARING_DEPLOYMENT is set to true'
+  )
+}
 
 export default config

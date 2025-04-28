@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 
-import jwt from 'jsonwebtoken'
 import path from 'path'
-import { getMariaDB } from './mariadb'
+import { getMariaDb } from './mariadb'
 import config from '../utils/config'
 import { createAndLogError } from '../utils/logger'
 import urljoin from 'url-join'
@@ -13,9 +12,9 @@ import { IdToken } from './types/idtoken'
 import { LtiCustomClaim } from './types/lti-custom-claim'
 import * as t from 'io-ts'
 import { createAccessToken } from './util/create-acccess-token'
-import { AccessTokenType, type AccessToken } from './types/access-token'
-import type { Entity } from './types/entity'
-import { getEdusharingInfo } from './edusharing/get-edusharing-info'
+import { edusharingApi } from './edusharing/edusharing-api'
+import { GetEntityBody } from '../frontend/types/get-entity-body'
+import { checkAccessToken } from './check-access-token'
 
 const ltijsKey = config.LTIJS_KEY
 
@@ -41,7 +40,7 @@ export async function deeplinkingDone(
       // Important: Only use lowercase letters in key. When I used uppercase letters they were changed to lowercase letters in the LTI Resource Link launch on itslearning.
       id: ltiCustomClaimId,
       type: req.query['type']?.toString(),
-      deeplinkingidtoken: JSON.stringify(idToken),
+      createdbyuser: idToken.user,
     }
 
     // https://www.imsglobal.org/spec/lti-dl/v2p0#lti-resource-link
@@ -89,6 +88,8 @@ export async function deeplinkingDone(
   }
 }
 
+// Called when serlo editor is launched.
+// Either this is a new entity on the platform. Or an existing entity.
 export async function onConnect(
   idToken: IdToken,
   _: Request,
@@ -104,8 +105,8 @@ export async function onConnect(
       )
 
     // The LTI platform id
-    const iss = idToken.iss
-    if (!iss)
+    const platform = idToken.iss
+    if (!platform)
       throw createAndLogError(
         'iss missing in idToken during launch of Serlo editor'
       )
@@ -117,9 +118,9 @@ export async function onConnect(
         'sub missing in idToken during launch of Serlo editor'
       )
 
-    const isEdusharing = iss.includes('edu-sharing')
+    const isEdusharing = platform.includes('edu-sharing')
 
-    // On Moodle 4.5.1+ (Build: 20250124) and edu-sharing we don't have a LTI deep linking launch before this launch. So, we might not get any 'custom' values here.
+    // We only get a custom value if there was a LTI deep linking launch beforehand.
     const custom: unknown = idToken.platformContext?.custom
 
     const customValid = isCustomValid(custom, isEdusharing)
@@ -128,17 +129,21 @@ export async function onConnect(
         `Invalid LTI custom claim during launch of Serlo editor. Was: ${JSON.stringify(custom)}`
       )
 
-    const mariaDB = getMariaDB()
+    const entity = await getEntity(resourceLinkId)
+    async function getEntity(resourceLinkId: string) {
+      if (config.IS_EDUSHARING_DEPLOYMENT) {
+        return await edusharingApi.getEntity(idToken, custom)
+      }
+      const mariadb = await getMariaDb()
 
-    // First open -> Create new row in database
-    // Not first open -> Get existing row in database
-    const entity = await mariaDB.createOrGetEntity({
-      custom,
-      idToken,
-      iss,
-      resourceLinkId,
-      user,
-    })
+      return await mariadb.createOrGetEntity({
+        custom,
+        idToken,
+        platform,
+        resourceLinkId,
+        user,
+      })
+    }
 
     const editorMode = getEditorMode(idToken, custom, isEdusharing)
 
@@ -270,29 +275,12 @@ export async function getEntity(
   next: NextFunction
 ) {
   try {
-    const database = getMariaDB()
+    const { entityId } = checkAccessToken(req)
 
-    const accessToken = req.query.accessToken
-    if (typeof accessToken !== 'string')
-      throw createAndLogError('Get entity: Missing access token')
+    const id = parseInt(entityId)
 
-    const decodedAccessToken = jwt.verify(accessToken, ltijsKey) as AccessToken
-
-    // Get json from database with decodedAccessToken.entityId
-    const entity = await database.fetchOptional<Entity | null>(
-      `
-      SELECT
-        id,
-        resource_link_id,
-        custom_claim_id,
-        content
-      FROM
-        lti_entity
-      WHERE
-        id = ?
-    `,
-      [String(decodedAccessToken.entityId)]
-    )
+    const mariaDb = await getMariaDb()
+    const entity: GetEntityBody = await mariaDb.getEntity(id)
 
     res.json(entity)
   } catch (error) {
@@ -308,14 +296,26 @@ export async function putEntity(
   next: NextFunction
 ) {
   try {
-    await saveEntityInOurDatabase(req)
+    const { entityId, accessRight } = checkAccessToken(req)
+    const id = parseInt(entityId)
+
+    if (accessRight !== 'write')
+      throw createAndLogError("Access token does not grant 'write' permission")
+
+    const contentString = JSON.stringify(req.body.editorState)
+
+    const mariaDb = await getMariaDb()
+
+    // Save content to mariadb
+    await mariaDb.setContent(id, contentString)
 
     // If we are on edu-sharing, we additionally save the entity to edu-sharing.
     // Why? When the user creates a copy of a Serlo Editor entity on edu-sharing and opens the new copy, our service does not know what other entity on edu-sharing was copied. But using this, it can fetch the content json from edu-sharing to initialize the state in our database.
     const idToken = res.locals.token as IdToken
     const isEdusharing = idToken.iss.includes('edu-sharing')
     if (isEdusharing) {
-      saveEntityInEdusharing(req, res, idToken)
+      edusharingApi
+        .putContent(contentString, res)
         // Do not forward error to express. To the user, a failed save to edu-sharing is still considered successful.
         .catch(() => {})
     }
@@ -325,90 +325,5 @@ export async function putEntity(
     // Forward error to express to handle error without crashing
     // See: https://expressjs.com/en/guide/error-handling.html
     next(error)
-  }
-}
-
-async function saveEntityInOurDatabase(req: Request) {
-  const database = getMariaDB()
-  const messagePrefix = 'Saving entity to database'
-
-  const accessToken = req.body.accessToken
-  if (typeof accessToken !== 'string')
-    throw createAndLogError(`${messagePrefix}: Missing access token`)
-
-  const decodedAccessToken = jwt.verify(accessToken, ltijsKey)
-
-  if (!AccessTokenType.is(decodedAccessToken))
-    throw createAndLogError(
-      `${messagePrefix}: Access token malformed. Was: ${JSON.stringify(decodedAccessToken)}`
-    )
-
-  if (decodedAccessToken.accessRight !== 'write')
-    throw createAndLogError(
-      `${messagePrefix}: Access token grants no right to modify content`
-    )
-
-  // Modify entity with decodedAccessToken.entityId in database
-  await database.mutate('UPDATE lti_entity SET content = ? WHERE id = ?', [
-    JSON.stringify(req.body.editorState),
-    decodedAccessToken.entityId,
-  ])
-}
-
-async function saveEntityInEdusharing(
-  req: Request,
-  res: Response,
-  idToken: IdToken
-) {
-  const {
-    appId,
-    dataToken,
-    keyId,
-    nodeId,
-    postContentApiUrl,
-    privateKey,
-    user,
-  } = await getEdusharingInfo(idToken, res.locals.context?.custom)
-
-  if (!postContentApiUrl) {
-    createAndLogError(`Saving to edu-sharing: postContentApiUrl was missing`)
-    return
-  }
-
-  const editorStateString = JSON.stringify(req.body.editorState)
-
-  const payload = {
-    appId,
-    nodeId,
-    user,
-    dataToken,
-  }
-  const message = jwt.sign(payload, privateKey, {
-    keyid: keyId,
-    algorithm: 'RS256',
-  })
-
-  const url = new URL(postContentApiUrl)
-  url.searchParams.append('jwt', message)
-  url.searchParams.append('mimetype', 'application/json')
-  url.searchParams.append('versionComment', 'Automatische Speicherung')
-
-  const blob = new Blob([editorStateString], {
-    type: 'application/json',
-  })
-
-  const data = new FormData()
-  data.set('file', blob)
-
-  const response = await fetch(url.href, {
-    method: 'POST',
-    body: data,
-  })
-
-  if (!response.ok) {
-    createAndLogError(
-      `Saving to edu-sharing: Fetch failed with status ${response.status} and body ${JSON.stringify(response.body)}`
-    )
-    return
   }
 }

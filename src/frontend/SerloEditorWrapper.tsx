@@ -39,15 +39,17 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
 
   const save = useCallback(
     (newState: unknown) => {
+      if (!accessToken) throw new Error('Missing access token')
+
       savePendingRef.current = false
       fetch('/entity', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json;charset=utf-8',
           Authorization: `Bearer ${ltik}`,
+          'Content-Type': 'application/json;charset=utf-8',
+          'X-Access-Token': accessToken,
         },
         body: JSON.stringify({
-          accessToken,
           editorState: newState,
         }),
       }).then((res) => {
