@@ -53,7 +53,7 @@
   },
   "devDependencies": {
     "@eslint/compat": "^1.2.5",
-    "@eslint/js": "^9.23.0",
+    "@eslint/js": "^9.26.0",
     "@types/jsonwebtoken": "9.0.8",
     "@types/lodash": "^4",
     "@types/ltijs": "4.0.12",
