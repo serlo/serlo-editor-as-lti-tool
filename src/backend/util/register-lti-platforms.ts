@@ -5,6 +5,10 @@ import config from '../../utils/config'
 import { edusharingMockClientId } from '../../../mocks'
 
 export async function registerLtiPlatforms() {
+  if (config.ENVIRONMENT === 'production') {
+    await registerTestMoodle()
+  }
+
   if (config.ENVIRONMENT === 'staging') {
     await registerSaltire()
 
@@ -152,5 +156,16 @@ async function registerSaltire() {
     accesstokenEndpoint:
       'https://saltire.lti.app/platform/token/sc24671cd70c6e45554e6c405a2f5d966',
     key: 'https://saltire.lti.app/platform/jwks/sc24671cd70c6e45554e6c405a2f5d966',
+  })
+}
+
+async function registerTestMoodle() {
+  return registerPlatform({
+    url: 'https://moodle.uber.space',
+    name: 'https://moodle.uber.space',
+    clientId: 'fdYMINlGrqzyDsd',
+    authenticationEndpoint: 'https://moodle.uber.space/mod/lti/auth.php',
+    accesstokenEndpoint: 'https://moodle.uber.space/mod/lti/token.php',
+    key: 'https://moodle.uber.space/mod/lti/certs.php',
   })
 }

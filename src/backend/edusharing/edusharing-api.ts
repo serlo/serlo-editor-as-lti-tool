@@ -3,9 +3,10 @@ import { IdToken } from '../types/idtoken'
 import { getEdusharingInfo } from './get-edusharing-info'
 import jwt from 'jsonwebtoken'
 import { createAndLogError } from '../../utils/logger'
+import type { GetEntityBody } from '../../frontend/types/get-entity-body'
 
 export const edusharingApi = {
-  async getEntity(idToken: IdToken, custom: unknown) {
+  async getEntity(idToken: IdToken, custom: unknown): Promise<GetEntityBody> {
     const {
       appId,
       dataToken,
@@ -39,9 +40,14 @@ export const edusharingApi = {
 
     const stringifiedDocumentState = await edusharingResponse.text()
 
-    return { id: nodeId, content: stringifiedDocumentState }
+    const noContent = stringifiedDocumentState.length === 0
+
+    return {
+      id: nodeId,
+      content: noContent ? null : stringifiedDocumentState,
+    }
   },
-  async putEntity(contentString: string, res: Response) {
+  async putContent(contentString: string, res: Response) {
     const {
       appId,
       dataToken,

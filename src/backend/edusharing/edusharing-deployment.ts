@@ -61,7 +61,7 @@ export async function putEntity(
 
     const contentString = JSON.stringify(req.body.editorState)
 
-    await edusharingApi.putEntity(contentString, res)
+    await edusharingApi.putContent(contentString, res)
 
     res.sendStatus(200)
   } catch (error) {
