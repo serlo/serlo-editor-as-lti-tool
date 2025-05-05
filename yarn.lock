@@ -2505,10 +2505,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/js@npm:^9.23.0":
-  version: 9.23.0
-  resolution: "@eslint/js@npm:9.23.0"
-  checksum: 10/d1d38fa2c4234f6ebed8e202530c9dccf565c47283f4e3c53955a47fed2bf8c59988f535672a32b53c14fed72e456c1c5cb050cd98a45474086b9693cbfa97d6
+"@eslint/js@npm:^9.26.0":
+  version: 9.26.0
+  resolution: "@eslint/js@npm:9.26.0"
+  checksum: 10/863d35df8f6675250bb5a917037e0f6833965437eba4c4649633fd0b55a93e8d727bcd36e9b5cc82047898ee9348cb40363e196f333914ae3a6bb36159495212
   languageName: node
   linkType: hard
 
@@ -14650,7 +14650,7 @@ __metadata:
     "@aws-sdk/s3-request-presigner": "npm:^3.797.0"
     "@dotenvx/dotenvx": "npm:^1.41.0"
     "@eslint/compat": "npm:^1.2.5"
-    "@eslint/js": "npm:^9.23.0"
+    "@eslint/js": "npm:^9.26.0"
     "@paralleldrive/cuid2": "npm:^2.2.2"
     "@sentry/node": "npm:^9.8.0"
     "@serlo/editor": "npm:0.25.1"
