@@ -3781,9 +3781,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@serlo/editor@npm:0.25.1":
-  version: 0.25.1
-  resolution: "@serlo/editor@npm:0.25.1"
+"@serlo/editor@npm:0.26.0":
+  version: 0.26.0
+  resolution: "@serlo/editor@npm:0.26.0"
   dependencies:
     "@open-iframe-resizer/react": "npm:1.2.1"
     "@serlo/katex-styles": "npm:1.0.1"
@@ -3795,7 +3795,7 @@ __metadata:
     react-dom: "npm:^18.3.1"
     react-hot-toast: "npm:^2.4.1"
     react-resizable: "npm:^3.0.5"
-  checksum: 10/a224a04a6fc6b247fad4028fd9b9b10efc20830bdbf572132712d916fc53b183965f68bc57346876e51b0d23a05ad6fd335148bc094b4548ce83ad640a1c8a4c
+  checksum: 10/57b764f92cea52b61c064887569e255e4b361aead86151d4f5f228bc049d10efef2485b97428558d62faf42ee19cebf33ebfa9b3697b0a6b5820d095a08bee54
   languageName: node
   linkType: hard
 
@@ -14653,7 +14653,7 @@ __metadata:
     "@eslint/js": "npm:^9.26.0"
     "@paralleldrive/cuid2": "npm:^2.2.2"
     "@sentry/node": "npm:^9.8.0"
-    "@serlo/editor": "npm:0.25.1"
+    "@serlo/editor": "npm:0.26.0"
     "@types/jsonwebtoken": "npm:9.0.8"
     "@types/lodash": "npm:^4"
     "@types/ltijs": "npm:4.0.12"
