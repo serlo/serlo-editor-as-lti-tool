@@ -14,43 +14,67 @@ const NonEmptyString = new t.Type<string, string, unknown>(
   String
 )
 
-const BooleanOrUndefined = new t.Type<boolean | undefined, string, unknown>(
-  'BooleanOrUndefined',
-  t.union([t.boolean, t.undefined]).is,
-  (input, context) => {
-    if (t.undefined.is(input) || input === '') {
-      return t.success(undefined)
-    }
-    if (t.string.is(input) && (input === 'true' || input === 'false')) {
-      return t.success(input === 'true')
-    }
-    return t.failure(input, context)
-  },
-  String
-)
+// Unused currently
+// const BooleanOrUndefined = new t.Type<boolean | undefined, string, unknown>(
+//   'BooleanOrUndefined',
+//   t.union([t.boolean, t.undefined]).is,
+//   (input, context) => {
+//     if (t.undefined.is(input) || input === '') {
+//       return t.success(undefined)
+//     }
+//     if (t.string.is(input) && (input === 'true' || input === 'false')) {
+//       return t.success(input === 'true')
+//     }
+//     return t.failure(input, context)
+//   },
+//   String
+// )
 
 const BaseEnv = {
   EDITOR_URL: NonEmptyString,
+  // Deprecated
   SERLO_EDITOR_TESTING_SECRET: t.string,
   LTIJS_KEY: NonEmptyString,
-  MYSQL_URI: t.union([t.string, t.undefined]),
-  IS_EDUSHARING_DEPLOYMENT: BooleanOrUndefined,
   MONGODB_URI: NonEmptyString,
-  S3_ENDPOINT: t.string,
-  BUCKET_NAME: t.string,
-  BUCKET_REGION: t.string,
-  BUCKET_ACCESS_KEY_ID: t.string,
-  BUCKET_SECRET_ACCESS_KEY: t.string,
-  MEDIA_BASE_URL: t.string,
+}
+
+const MysqlEnv = {
+  MYSQL_URI: NonEmptyString,
+}
+
+const MediaBucketEnv = {
+  S3_ENDPOINT: NonEmptyString,
+  BUCKET_NAME: NonEmptyString,
+  BUCKET_REGION: NonEmptyString,
+  BUCKET_ACCESS_KEY_ID: NonEmptyString,
+  BUCKET_SECRET_ACCESS_KEY: NonEmptyString,
+  MEDIA_BASE_URL: NonEmptyString,
+}
+
+const EdusharingEnv = {
+  EDUSHARING_RLP_URL: NonEmptyString,
+  EDUSHARING_RLP_NAME: NonEmptyString,
+  EDUSHARING_RLP_AUTHENTICATION_ENDPOINT: NonEmptyString,
+  EDUSHARING_RLP_ACCESS_TOKEN_ENDPOINT: NonEmptyString,
+  EDUSHARING_RLP_KEYSET_ENDPOINT: NonEmptyString,
+  SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP: NonEmptyString,
+  EDUSHARING_RLP_LOGIN_ENDPOINT: NonEmptyString,
+  EDUSHARING_RLP_LAUNCH_ENDPOINT: NonEmptyString,
+  EDUSHARING_RLP_DETAILS_ENDPOINT: NonEmptyString,
+  EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR: NonEmptyString,
 }
 
 const LocalEnvType = t.type({
   ...BaseEnv,
+  ...MysqlEnv,
+  ...MediaBucketEnv,
   ENVIRONMENT: t.literal('local'),
 })
 
 const DevelopmentEnvType = t.type({
   ...BaseEnv,
+  ...MysqlEnv,
+  ...MediaBucketEnv,
   ENVIRONMENT: t.literal('development'),
   MOODLE_NAME: NonEmptyString,
   MOODLE_URL: NonEmptyString,
@@ -62,6 +86,9 @@ const DevelopmentEnvType = t.type({
 
 const StagingEnvType = t.type({
   ...BaseEnv,
+  ...MysqlEnv,
+  ...MediaBucketEnv,
+  ...EdusharingEnv,
   ENVIRONMENT: t.literal('staging'),
   ITSLEARNING_NAME: NonEmptyString,
   ITSLEARNING_URL: NonEmptyString,
@@ -69,33 +96,33 @@ const StagingEnvType = t.type({
   ITSLEARNING_ACCESS_TOKEN_ENDPOINT: NonEmptyString,
   ITSLEARNING_KEYSET_ENDPOINT: NonEmptyString,
   SERLO_EDITOR_CLIENT_ID_ON_ITSLEARNING: NonEmptyString,
-  EDUSHARING_RLP_URL: NonEmptyString,
-  EDUSHARING_RLP_NAME: NonEmptyString,
-  EDUSHARING_RLP_AUTHENTICATION_ENDPOINT: NonEmptyString,
-  EDUSHARING_RLP_ACCESS_TOKEN_ENDPOINT: NonEmptyString,
-  EDUSHARING_RLP_KEYSET_ENDPOINT: NonEmptyString,
-  SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP: NonEmptyString,
-  EDUSHARING_RLP_LOGIN_ENDPOINT: NonEmptyString,
-  EDUSHARING_RLP_LAUNCH_ENDPOINT: NonEmptyString,
-  EDUSHARING_RLP_DETAILS_ENDPOINT: NonEmptyString,
-  EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR: NonEmptyString,
   // currently only for staging, in the future also or only for production
   OPENAI_API_KEY: NonEmptyString,
 })
 
 const ProductionEnvType = t.type({
   ...BaseEnv,
-  ENVIRONMENT: t.literal('production'),
+  ...MysqlEnv,
+  ...MediaBucketEnv,
+  ENVIRONMENT: t.readonly(t.literal('production')),
 })
 
-const IOEnv = t.union([
+const EdusharingEnvType = t.type({
+  ...BaseEnv,
+  ENVIRONMENT: t.literal('edusharing'),
+})
+
+const IOEnvType = t.union([
   LocalEnvType,
   DevelopmentEnvType,
   StagingEnvType,
   ProductionEnvType,
+  EdusharingEnvType,
 ])
 
-const decodedConfig = IOEnv.decode(process.env)
+export type IOEnv = t.TypeOf<typeof IOEnvType>
+
+const decodedConfig = IOEnvType.decode(process.env)
 
 if (decodedConfig._tag === 'Left') {
   throw new Error(
@@ -104,11 +131,5 @@ if (decodedConfig._tag === 'Left') {
 }
 
 const config = decodedConfig.right
-
-if (!config.MYSQL_URI && !config.IS_EDUSHARING_DEPLOYMENT) {
-  throw new Error(
-    'Either MYSQL_URI is set or IS_EDUSHARING_DEPLOYMENT is set to true'
-  )
-}
 
 export default config

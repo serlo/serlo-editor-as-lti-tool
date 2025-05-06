@@ -83,7 +83,7 @@ async function setup() {
   // Get content json
   app.get(
     '/entity',
-    config.IS_EDUSHARING_DEPLOYMENT
+    config.ENVIRONMENT === 'edusharing'
       ? edusharingDeployment.getEntity
       : editor.getEntity
   )
@@ -91,7 +91,7 @@ async function setup() {
   // Save content json
   app.put(
     '/entity',
-    config.IS_EDUSHARING_DEPLOYMENT
+    config.ENVIRONMENT === 'edusharing'
       ? edusharingDeployment.putEntity
       : editor.putEntity
   )
@@ -118,9 +118,11 @@ async function setup() {
   // Get edu-sharing embed html snippet
   app.get('/edusharing-embed/get', edusharing.get)
 
-  if (media.hasS3Env && media.proxyMiddleware) {
-    app.get('/media/presigned-url', media.presignedUrl)
-    app.use(media.proxyMiddleware)
+  // Media route handlers, not available in docker image for edu-sharing
+  const mediaHandlers = media.tryGetMediaHandlers()
+  if (mediaHandlers) {
+    app.get('/media/presigned-url', mediaHandlers.presignedUrl)
+    app.use(mediaHandlers.proxy)
   }
 
   // app.post('/ai/generate-content', ai.generateContent)
