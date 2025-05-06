@@ -131,7 +131,7 @@ export async function onConnect(
 
     const entity = await getEntity(resourceLinkId)
     async function getEntity(resourceLinkId: string) {
-      if (config.IS_EDUSHARING_DEPLOYMENT) {
+      if (config.ENVIRONMENT === 'edusharing') {
         return await edusharingApi.getEntity(idToken, custom)
       }
       const mariadb = await getMariaDb()
@@ -157,6 +157,9 @@ export async function onConnect(
     searchParams.append('accessToken', accessToken)
     searchParams.append('resourceLinkId', resourceLinkId)
     searchParams.append('testingSecret', config.SERLO_EDITOR_TESTING_SECRET)
+    if (config.ENVIRONMENT === 'edusharing') {
+      searchParams.append('disableAssetUpload', 'true')
+    }
     searchParams.append('ltik', ltik)
     searchParams.append('contextTitle', contextTitle ?? '')
     searchParams.append('title', title ?? '')
