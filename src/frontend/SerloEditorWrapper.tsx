@@ -31,7 +31,7 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   const queryString = window.location.search
   const urlParams = new URLSearchParams(queryString)
   const testingSecret = urlParams.get('testingSecret')
-  const assetUploadActive = urlParams.get('assetUpload')
+  const disableAssetUpload = urlParams.get('disableAssetUpload') === 'true'
   const accessToken = urlParams.get('accessToken')
 
   const savePendingRef = useRef<boolean>(false)
@@ -83,15 +83,15 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
     const onEdusharing = platformUrl.includes('edu-sharing')
 
     // only include video plugin if upload is available
-    const filteredPlugins = assetUploadActive
-      ? defaultPlugins
-      : defaultPlugins.filter(
+    const filteredPlugins = disableAssetUpload
+      ? defaultPlugins.filter(
           (type) =>
             ![
               EditorPluginType.Video,
               EditorPluginType.InteractiveVideo,
             ].includes(type as EditorPluginType)
         )
+      : defaultPlugins
 
     if (onEdusharing) {
       return [
