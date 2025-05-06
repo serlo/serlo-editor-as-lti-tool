@@ -32,8 +32,6 @@ const NonEmptyString = new t.Type<string, string, unknown>(
 
 const BaseEnv = {
   EDITOR_URL: NonEmptyString,
-  // Deprecated
-  SERLO_EDITOR_TESTING_SECRET: t.string,
   LTIJS_KEY: NonEmptyString,
   MONGODB_URI: NonEmptyString,
 }
