@@ -2,6 +2,7 @@ import {
   type RowDataPacket,
   type ResultSetHeader,
   createPool,
+  type Pool,
 } from 'mysql2/promise'
 import config from '../utils/config'
 import { IdToken } from './types/idtoken'
@@ -13,10 +14,7 @@ import { LtiCustomClaimType } from './types/lti-custom-claim'
 import { createAndLogError } from '../utils/logger'
 import { edusharingApi } from './edusharing/edusharing-api'
 
-const isInitialized = false
-
-if (!config.MYSQL_URI) throw createAndLogError('MYSQL_URI is missing')
-const pool = createPool(config.MYSQL_URI)
+let pool: Pool | null = null
 
 const mariaDb = {
   async createOrGetEntity({
@@ -32,6 +30,8 @@ const mariaDb = {
     resourceLinkId: string
     user: string
   }) {
+    if (!pool) throw createAndLogError('Mariadb pool not initialized')
+
     const userWhenCreated = LtiCustomClaimType.is(custom)
       ? custom.createdbyuser
       : undefined
@@ -118,6 +118,8 @@ const mariaDb = {
     return { ...insertedEntity, id: insertedEntity.id.toString() }
   },
   async getEntity(id: number) {
+    if (!pool) throw createAndLogError('Mariadb pool not initialized')
+
     const [rows] = await pool.query<RowDataPacket[]>(
       `
         SELECT
@@ -142,6 +144,8 @@ const mariaDb = {
     return { ...entity, id: entity.id.toString() }
   },
   async setContent(id: number, content: string) {
+    if (!pool) throw createAndLogError('Mariadb pool not initialized')
+
     await pool.query<ResultSetHeader>(
       'UPDATE lti_entity SET content = ? WHERE id = ?',
       [content, id]
@@ -150,7 +154,14 @@ const mariaDb = {
 }
 
 export async function getMariaDb() {
-  if (!isInitialized) {
+  if (config.ENVIRONMENT === 'edusharing')
+    throw createAndLogError(
+      `Cannot get mariadb because it is not available in environment '${config.ENVIRONMENT}'`
+    )
+
+  if (!pool) {
+    pool = createPool(config.MYSQL_URI)
+
     // Create tables if not exist
     const initSql = await readFile(
       path.join(__dirname, '../../db/createTablesIfNotExist.sql'),

@@ -30,7 +30,7 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   const { initialState, ltik } = props
   const queryString = window.location.search
   const urlParams = new URLSearchParams(queryString)
-  const testingSecret = urlParams.get('testingSecret')
+  const disableAssetUpload = urlParams.get('disableAssetUpload') === 'true'
   const accessToken = urlParams.get('accessToken')
 
   const savePendingRef = useRef<boolean>(false)
@@ -76,9 +76,11 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
   )
 
   const plugins = getPlugins(ltik)
+
   function getPlugins(ltik: string) {
     const { platformUrl } = jwtDecode(ltik) as Ltik
     const onEdusharing = platformUrl.includes('edu-sharing')
+
     if (onEdusharing) {
       return [
         ...defaultPlugins,
@@ -95,10 +97,10 @@ export default function SerloEditorWrapper(props: SerloContentProps) {
       initialState={initialState}
       onChange={handleOnChange}
       editorVariant="lti-tool"
-      _testingSecret={testingSecret}
       plugins={plugins}
       _ltik={ltik}
       isProductionEnvironment={location.hostname === 'editor.serlo.org'}
+      disableMediaUpload={disableAssetUpload}
     >
       {(editor) => {
         return <>{editor.element}</>
