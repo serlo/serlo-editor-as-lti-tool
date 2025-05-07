@@ -12,6 +12,8 @@
     "dev:frontend": "vite build --watch",
     "dev:databases": "docker compose up",
     "dev:backend": "dotenvx run -- tsx --watch src/backend/index.ts",
+    "dev-image": "docker compose -f docker-compose.yml -f docker-compose.image.yml up",
+    "dev-image-cmd": "npm-run-all --parallel dev:backend dev:frontend dev-mocks",
     "dev-mocks": "dotenvx run -- tsx --watch mocks/start.ts",
     "format": "npm-run-all --sequential --continue-on-error \"format:*\"",
     "format:eslint": "eslint --fix",

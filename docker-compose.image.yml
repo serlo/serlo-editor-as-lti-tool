@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+      - 8100:8100
+      - 8101:8101
+    networks:
+      - serlo-network
+    volumes:
+      - .:/app
+    working_dir: /app
+    entrypoint: ['yarn', 'dev-image-cmd']
+    env_file:
+      - .env.image
+networks:
+  serlo-network:
