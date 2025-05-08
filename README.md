@@ -75,7 +75,7 @@ And then run the following command.
 $ yarn dev-image
 ```
 
-Now you can open the browser at localhost:8100 or localhost:8101.
+Now you can open the browser at `localhost:8100`.
 
 To publish a new docker image, just change the version at `package.json` and
 push to branch `staging`.
