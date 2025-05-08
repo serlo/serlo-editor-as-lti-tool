@@ -1,7 +1,6 @@
 services:
   app:
     build: .
-    pull_policy: always
     develop:
       watch:
           - action: rebuild
