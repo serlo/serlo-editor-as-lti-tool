@@ -1,7 +1,11 @@
 services:
   app:
-    image: ghcr.io/serlo/serlo-editor-as-lti-tool:latest
+    build: .
     pull_policy: always
+    develop:
+      watch:
+          - action: rebuild
+            path: ./src
     ports:
       - 3000:3000
     networks:
