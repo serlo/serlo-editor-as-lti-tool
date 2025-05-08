@@ -27,15 +27,12 @@ export class EdusharingServer {
   private state = '2452454263425'
   private nonce = '8356345643564'
   private defaultCustom = {
-    getContentApiUrl:
-      `http://${mockDomain}:8100/edu-sharing/rest/ltiplatform/v13/content`,
+    getContentApiUrl: `http://${mockDomain}:8100/edu-sharing/rest/ltiplatform/v13/content`,
     fileName: 'Test Content',
-    getDetailsSnippetUrl:
-      `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/details`,
+    getDetailsSnippetUrl: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/details`,
     dataToken:
       'kOXGc6AbqYW7iHOl3b48Pj/ngudoLCZk+DJwYxAg9wTiKsN9TKRY13qU+6vNNMEV2Guya3NPWO+Ay8IJDtQWMKxnkku/3mc+n64TIgMjs2yY7wXMYcvoRK4C9iXXpydNWQCGreYU2BcnMwne/b5BngOvBjqqVCPLMGT/lmvylP//GCzM7V99h9fKVMrgY97qOdsB1O0Ti//E3odWU1dFUMu3NLPy3MdTHXdViQpyPFRpgnZ8kcywDl0bLYSKy0pUuJy0hBvlnGmFyKlcQ38HaR2CZ9wRxrNgRxxEzGd8J+T6YSNoD8OyB9Nyjbp0N3tog4XhEZ/UASIqLYBzk+ygOA==',
-    postContentApiUrl:
-      `http://${mockDomain}:8100/edu-sharing/rest/ltiplatform/v13/content`,
+    postContentApiUrl: `http://${mockDomain}:8100/edu-sharing/rest/ltiplatform/v13/content`,
     appId: 'qsa2DgKBJ2WgoJO1',
     nodeId: uuid_v4(),
     user: 'admin',
@@ -193,8 +190,7 @@ export class EdusharingServer {
 
         const targetParameters = {
           iss: editorUrl,
-          target_link_uri:
-            `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13`,
+          target_link_uri: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13`,
           client_id: edusharingMockClientId,
           lti_deployment_id: '1',
         }
@@ -220,8 +216,7 @@ export class EdusharingServer {
             response_mode: 'form_post',
             nonce: this.nonce,
             prompt: 'none',
-            redirect_uri:
-              `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13`,
+            redirect_uri: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13`,
           },
         })
       }
@@ -284,8 +279,7 @@ export class EdusharingServer {
               },
               type: 'ltiResourceLink',
               title: 'Test ' + embedType,
-              url:
-                `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13/960c48d0-5e01-45ca-aaf6-d648269f0db2${embedType}`
+              url: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13/960c48d0-5e01-45ca-aaf6-d648269f0db2${embedType}`,
             },
           ],
         }

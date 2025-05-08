@@ -3,8 +3,8 @@ services:
     build: .
     develop:
       watch:
-          - action: rebuild
-            path: ./src
+        - action: rebuild
+          path: ./src
     ports:
       - 3000:3000
     networks:

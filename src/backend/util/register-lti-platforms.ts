@@ -127,14 +127,12 @@ export async function registerLtiPlatforms() {
     })
     if (edusharingMockPlatform) {
       edusharingAsToolConfigs.push({
-        issWhenEdusharingLaunchedSerloEditor:
-          'http://mocks:8100/edu-sharing',
+        issWhenEdusharingLaunchedSerloEditor: 'http://mocks:8100/edu-sharing',
         loginEndpoint:
           'http://mocks:8100/edu-sharing/rest/lti/v13/oidc/login_initiations',
         launchEndpoint: 'http://mocks:8100/edu-sharing/rest/lti/v13/lti13',
         clientId: edusharingMockClientId,
-        detailsEndpoint:
-          'http://mocks:8100/edu-sharing/rest/lti/v13/details',
+        detailsEndpoint: 'http://mocks:8100/edu-sharing/rest/lti/v13/details',
         keysetEndpoint: 'http://mocks:8100/edu-sharing/rest/lti/v13/jwks',
       })
       logger.info(`Registered tool: edusharing-mock`)
