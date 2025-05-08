@@ -1,10 +1,16 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/serlo/serlo-editor-as-lti-tool:latest
+    pull_policy: always
     ports:
       - 3000:3000
+    networks:
+      - serlo-network
+    env_file:
+      - .env.image
+  mocks:
+    image: node:22
+    ports:
       - 8100:8100
       - 8101:8101
     networks:
@@ -12,7 +18,7 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    entrypoint: ['yarn', 'dev-image-cmd']
+    entrypoint: ['yarn', 'dev-mocks']
     env_file:
       - .env.image
 networks:

@@ -61,10 +61,17 @@ it to `src/utils/config.ts`.
 
 # Using Docker to Deploy
 
-You may want to deploy using docker. First, during development, you can locally
-test it in the following command.
+You may want to deploy using docker.
 
-```console
+First, during development, you must add the following line in `/etc/hosts`
+
+```
+127.0.0.1 mocks
+```
+
+And then run the following command.
+
+```
 $ yarn dev-image
 ```
 
