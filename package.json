@@ -35,7 +35,7 @@
     "@dotenvx/dotenvx": "^1.41.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@sentry/node": "^9.8.0",
-    "@serlo/editor": "0.25.1",
+    "@serlo/editor": "0.26.0",
     "express": "^4.21.2",
     "fp-ts": "2.16.9",
     "http-proxy-middleware": "^3.0.3",
