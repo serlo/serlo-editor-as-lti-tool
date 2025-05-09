@@ -137,6 +137,26 @@ export async function registerLtiPlatforms() {
       })
       logger.info(`Registered tool: edusharing-mock`)
     }
+    // Register platform: edu-sharing (RLP)
+    const edusharingPlatform = await registerPlatform({
+      url: config.EDUSHARING_RLP_URL,
+      name: config.EDUSHARING_RLP_NAME,
+      clientId: config.SERLO_EDITOR_CLIENT_ID_ON_EDUSHARING_RLP,
+      authenticationEndpoint: config.EDUSHARING_RLP_AUTHENTICATION_ENDPOINT,
+      accesstokenEndpoint: config.EDUSHARING_RLP_ACCESS_TOKEN_ENDPOINT,
+      key: config.EDUSHARING_RLP_KEYSET_ENDPOINT,
+    })
+    if (edusharingPlatform) {
+      edusharingAsToolConfigs.push({
+        issWhenEdusharingLaunchedSerloEditor: config.EDUSHARING_RLP_URL,
+        loginEndpoint: config.EDUSHARING_RLP_LOGIN_ENDPOINT,
+        launchEndpoint: config.EDUSHARING_RLP_LAUNCH_ENDPOINT,
+        clientId: config.EDUSHARING_RLP_CLIENT_ID_ON_SERLO_EDITOR,
+        detailsEndpoint: config.EDUSHARING_RLP_DETAILS_ENDPOINT,
+        keysetEndpoint: config.EDUSHARING_RLP_KEYSET_ENDPOINT,
+      })
+      logger.info('Registered tool: edu-sharing (RLP)')
+    }
   }
 }
 
