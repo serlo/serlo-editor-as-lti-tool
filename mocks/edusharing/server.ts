@@ -320,7 +320,14 @@ export class EdusharingServer {
       }
 
       const serloEditorJwks = jose.createRemoteJWKSet(
-        new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
+        new URL(
+          urlJoin(
+            config.ENVIRONMENT === 'edusharing'
+              ? 'http://app:3000/'
+              : editorUrl,
+            'edusharing-embed/keys'
+          )
+        )
       )
 
       await jose.jwtVerify(idToken, serloEditorJwks, {
