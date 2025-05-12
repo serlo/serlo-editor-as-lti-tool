@@ -107,6 +107,7 @@ const ProductionEnvType = t.type({
 
 const EdusharingEnvType = t.type({
   ...BaseEnv,
+  ...EdusharingEnv,
   ENVIRONMENT: t.literal('edusharing'),
 })
 

@@ -17,6 +17,8 @@ export const edusharingMockClientId = 'edusharing-mock'
 
 const VersionComment = t.union([t.null, t.string, t.array(t.string)])
 
+const mockDomain = config.ENVIRONMENT === 'edusharing' ? 'mocks' : 'localhost'
+
 export class EdusharingServer {
   private keys = jose.generateKeyPair('RS256', {
     modulusLength: 2048,
@@ -25,15 +27,12 @@ export class EdusharingServer {
   private state = '2452454263425'
   private nonce = '8356345643564'
   private defaultCustom = {
-    getContentApiUrl:
-      'http://localhost:8100/edu-sharing/rest/ltiplatform/v13/content',
+    getContentApiUrl: `http://${mockDomain}:8100/edu-sharing/rest/ltiplatform/v13/content`,
     fileName: 'Test Content',
-    getDetailsSnippetUrl:
-      'http://localhost:8100/edu-sharing/rest/lti/v13/details',
+    getDetailsSnippetUrl: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/details`,
     dataToken:
       'kOXGc6AbqYW7iHOl3b48Pj/ngudoLCZk+DJwYxAg9wTiKsN9TKRY13qU+6vNNMEV2Guya3NPWO+Ay8IJDtQWMKxnkku/3mc+n64TIgMjs2yY7wXMYcvoRK4C9iXXpydNWQCGreYU2BcnMwne/b5BngOvBjqqVCPLMGT/lmvylP//GCzM7V99h9fKVMrgY97qOdsB1O0Ti//E3odWU1dFUMu3NLPy3MdTHXdViQpyPFRpgnZ8kcywDl0bLYSKy0pUuJy0hBvlnGmFyKlcQ38HaR2CZ9wRxrNgRxxEzGd8J+T6YSNoD8OyB9Nyjbp0N3tog4XhEZ/UASIqLYBzk+ygOA==',
-    postContentApiUrl:
-      'http://localhost:8100/edu-sharing/rest/ltiplatform/v13/content',
+    postContentApiUrl: `http://${mockDomain}:8100/edu-sharing/rest/ltiplatform/v13/content`,
     appId: 'qsa2DgKBJ2WgoJO1',
     nodeId: uuid_v4(),
     user: 'admin',
@@ -56,7 +55,7 @@ export class EdusharingServer {
         targetUrl: urlJoin(editorUrl, 'lti/login'),
         params: {
           target_link_uri: urlJoin(editorUrl, 'lti/launch'),
-          iss: 'http://localhost:8100/edu-sharing',
+          iss: `http://${mockDomain}:8100/edu-sharing`,
           login_hint: this.loginHint,
           lti_message_hint: uuid_v4(), // TODO: Maybe make this be a fixed value for tests?
           lti_deployment_id: '1',
@@ -75,7 +74,7 @@ export class EdusharingServer {
 
       const payload = {
         nonce: req.query['nonce'],
-        iss: 'http://localhost:8100/edu-sharing',
+        iss: `http://${mockDomain}:8100/edu-sharing`,
         aud: 'piQ0JV8O880ZrVt',
         sub: this.loginHint,
         'https://purl.imsglobal.org/spec/lti/claim/deployment_id': '1',
@@ -106,7 +105,7 @@ export class EdusharingServer {
         },
         'https://purl.imsglobal.org/spec/lti/claim/launch_presentation': {
           document_target: 'window',
-          return_url: `http://localhost:8100/edu-sharing/components/workspace?id=${this.contextId}&mainnav=true&displayType=0`,
+          return_url: `http://${mockDomain}:8100/edu-sharing/components/workspace?id=${this.contextId}&mainnav=true&displayType=0`,
           locale: 'de_DE',
         },
         'https://purl.imsglobal.org/spec/lti/claim/message_type':
@@ -191,8 +190,7 @@ export class EdusharingServer {
 
         const targetParameters = {
           iss: editorUrl,
-          target_link_uri:
-            'http://localhost:8100/edu-sharing/rest/lti/v13/lti13',
+          target_link_uri: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13`,
           client_id: edusharingMockClientId,
           lti_deployment_id: '1',
         }
@@ -218,8 +216,7 @@ export class EdusharingServer {
             response_mode: 'form_post',
             nonce: this.nonce,
             prompt: 'none',
-            redirect_uri:
-              'http://localhost:8100/edu-sharing/rest/lti/v13/lti13',
+            redirect_uri: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13`,
           },
         })
       }
@@ -282,9 +279,7 @@ export class EdusharingServer {
               },
               type: 'ltiResourceLink',
               title: 'Test ' + embedType,
-              url:
-                'http://localhost:8100/edu-sharing/rest/lti/v13/lti13/960c48d0-5e01-45ca-aaf6-d648269f0db2' +
-                embedType,
+              url: `http://${mockDomain}:8100/edu-sharing/rest/lti/v13/lti13/960c48d0-5e01-45ca-aaf6-d648269f0db2${embedType}`,
             },
           ],
         }
@@ -325,7 +320,14 @@ export class EdusharingServer {
       }
 
       const serloEditorJwks = jose.createRemoteJWKSet(
-        new URL(urlJoin(editorUrl, 'edusharing-embed/keys'))
+        new URL(
+          urlJoin(
+            config.ENVIRONMENT === 'edusharing'
+              ? 'http://app:3000/'
+              : editorUrl,
+            'edusharing-embed/keys'
+          )
+        )
       )
 
       await jose.jwtVerify(idToken, serloEditorJwks, {

@@ -61,15 +61,21 @@ it to `src/utils/config.ts`.
 
 # Using Docker to Deploy
 
-You may want to deploy using docker. First, during development, you can locally
-test it in the following way.
+You may want to deploy using docker.
+
+First, during development, you must add the following line in `/etc/hosts`
 
 ```
-$ docker compose up -d # to be sure that it will not crash because of missing DBs
-$ docker build . -t serlo-editor-as-lti-tool
-$ nano .env # change 'localhost' to 'host.docker.internal'
-$ docker run --env-file .env --add-host host.docker.internal:host-gateway serlo-editor-as-lti-tool
+127.0.0.1 mocks
 ```
+
+And then run the following command.
+
+```
+$ yarn dev-image
+```
+
+Now you can open the browser at `localhost:8100`.
 
 To publish a new docker image, just change the version at `package.json` and
 push to branch `staging`.

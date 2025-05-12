@@ -3,6 +3,8 @@ services:
     image: mongo:6 # Match major version on Uberspace
     ports:
       - 27017:27017
+    networks:
+      - serlo-network
   mariadb:
     image: mariadb:10 # Match major version on Uberspace
     environment:
@@ -13,3 +15,8 @@ services:
       - MARIADB_ROOT_PASSWORD=secret
     ports:
       - 3306:3306
+    networks:
+      - serlo-network
+
+networks:
+  serlo-network:
