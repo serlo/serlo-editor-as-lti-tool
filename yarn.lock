@@ -2038,9 +2038,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dotenvx/dotenvx@npm:^1.41.0":
-  version: 1.41.0
-  resolution: "@dotenvx/dotenvx@npm:1.41.0"
+"@dotenvx/dotenvx@npm:^1.43.0":
+  version: 1.43.0
+  resolution: "@dotenvx/dotenvx@npm:1.43.0"
   dependencies:
     commander: "npm:^11.1.0"
     dotenv: "npm:^16.4.5"
@@ -2054,7 +2054,7 @@ __metadata:
   bin:
     dotenvx: src/cli/dotenvx.js
     git-dotenvx: src/cli/dotenvx.js
-  checksum: 10/c70b4e9dd80cb91e906cdb95200526ff0c0c28815a3c900bde502e9a46ece9f90b998a48fb453c11881da30240f1f8c694e1fbce5e96115e2d992a38bf2bb0ea
+  checksum: 10/c4bfd12082e81f6229c5725faf3f16834d6278118be0adb7107013cc82ba5318537011a8e9c1c159d9f8219cf077daeb98ee9a3bd1bfac4c3460a11192829248
   languageName: node
   linkType: hard
 
@@ -14629,7 +14629,7 @@ __metadata:
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.797.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.797.0"
-    "@dotenvx/dotenvx": "npm:^1.41.0"
+    "@dotenvx/dotenvx": "npm:^1.43.0"
     "@eslint/compat": "npm:^1.2.5"
     "@eslint/js": "npm:^9.26.0"
     "@paralleldrive/cuid2": "npm:^2.2.2"
