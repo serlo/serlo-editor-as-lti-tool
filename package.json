@@ -64,7 +64,7 @@
     "@types/url-join": "^4.0.3",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react-swc": "^3.8.1",
-    "autoprefixer": "^10.4.20",
+    "autoprefixer": "^10.4.21",
     "codeceptjs": "^3.7.3",
     "codeceptjs-chai": "^2.3.5",
     "esbuild": "^0.25.1",
