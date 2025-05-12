@@ -114,30 +114,6 @@ export async function registerLtiPlatforms() {
   }
 
   if (config.ENVIRONMENT === 'edusharing') {
-    // Register platform: edusharing mock
-    const edusharingMockPlatform = await registerPlatform({
-      url: 'http://mocks:8100/edu-sharing',
-      name: 'edusharing-mock',
-      clientId: 'piQ0JV8O880ZrVt', // The ID for this LTI tool on the LTI platform
-      authenticationEndpoint:
-        'http://mocks:8100/edu-sharing/rest/ltiplatform/v13/auth',
-      accesstokenEndpoint:
-        'http://mocks:8100/edu-sharing/rest/ltiplatform/v13/token',
-      key: 'http://mocks:8100/edu-sharing/rest/lti/v13/jwks',
-    })
-    if (edusharingMockPlatform) {
-      edusharingAsToolConfigs.push({
-        issWhenEdusharingLaunchedSerloEditor: 'http://mocks:8100/edu-sharing',
-        loginEndpoint:
-          'http://mocks:8100/edu-sharing/rest/lti/v13/oidc/login_initiations',
-        launchEndpoint: 'http://mocks:8100/edu-sharing/rest/lti/v13/lti13',
-        clientId: edusharingMockClientId,
-        detailsEndpoint: 'http://mocks:8100/edu-sharing/rest/lti/v13/details',
-        keysetEndpoint: 'http://mocks:8100/edu-sharing/rest/lti/v13/jwks',
-      })
-      logger.info(`Registered tool: edusharing-mock`)
-    }
-    // Register platform: edu-sharing (RLP)
     const edusharingPlatform = await registerPlatform({
       url: config.EDUSHARING_RLP_URL,
       name: config.EDUSHARING_RLP_NAME,
@@ -155,7 +131,7 @@ export async function registerLtiPlatforms() {
         detailsEndpoint: config.EDUSHARING_RLP_DETAILS_ENDPOINT,
         keysetEndpoint: config.EDUSHARING_RLP_KEYSET_ENDPOINT,
       })
-      logger.info('Registered tool: edu-sharing (RLP)')
+      logger.info(`Registered: ${config.EDUSHARING_RLP_URL}`)
     }
   }
 }
