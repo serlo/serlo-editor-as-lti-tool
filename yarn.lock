@@ -3367,7 +3367,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pkgr/core@npm:^0.2.3":
+"@pkgr/core@npm:^0.2.4":
   version: 0.2.4
   resolution: "@pkgr/core@npm:0.2.4"
   checksum: 10/8544f0346c3f7035b9e2fdf60179c68b12d3c76b3fba9533844099af67cf5c0ce5257538f5faa05953d48cc1536d046f003231f321b2f75b3fb449db8410a2b7
@@ -13476,18 +13476,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier-plugin-packagejson@npm:^2.5.12":
-  version: 2.5.12
-  resolution: "prettier-plugin-packagejson@npm:2.5.12"
+"prettier-plugin-packagejson@npm:^2.5.13":
+  version: 2.5.13
+  resolution: "prettier-plugin-packagejson@npm:2.5.13"
   dependencies:
     sort-package-json: "npm:3.2.1"
-    synckit: "npm:0.11.4"
+    synckit: "npm:0.11.5"
   peerDependencies:
     prettier: ">= 1.16.0"
   peerDependenciesMeta:
     prettier:
       optional: true
-  checksum: 10/d74b7329c78d1a8032e2599ddc3641556afabbe82d70ed35f8b7932a52ced77471c1ffdd57e022cb66ebcf8b74a35629a241c5f0a084eb88b322cf2104609fdc
+  checksum: 10/7290753f16ddc75cf0cf6489af12e9935d56d32193a65a30d8c9420e3d94a0e5ef5a86d648ba818244f06b45c7f3512eba81372cef0c697b5514c82abff5bc4f
   languageName: node
   linkType: hard
 
@@ -14697,7 +14697,7 @@ __metadata:
     playwright: "npm:^1.51.1"
     postcss: "npm:^8.5.3"
     prettier: "npm:3.5.3"
-    prettier-plugin-packagejson: "npm:^2.5.12"
+    prettier-plugin-packagejson: "npm:^2.5.13"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     tailwindcss: "npm:3"
@@ -15399,13 +15399,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"synckit@npm:0.11.4":
-  version: 0.11.4
-  resolution: "synckit@npm:0.11.4"
+"synckit@npm:0.11.5":
+  version: 0.11.5
+  resolution: "synckit@npm:0.11.5"
   dependencies:
-    "@pkgr/core": "npm:^0.2.3"
+    "@pkgr/core": "npm:^0.2.4"
     tslib: "npm:^2.8.1"
-  checksum: 10/37c9fc5af9f06379d263c514e477000074d8af9ef9d3a63354b31dcce39bbf778a67accc2c66c52a13d6fd3871a7fbd36120f713a59edb6fa16358616f3a260f
+  checksum: 10/de3f10ace0f80ddedb58cc4274b4f6687c14871bcb3231d394b17d784bb3f8747c769dff8976e08717ee38e60f0fe7e111487f19b5eeb4c794c975f062161e0c
   languageName: node
   linkType: hard
 
