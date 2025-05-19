@@ -12342,9 +12342,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mysql2@npm:^3.14.0":
-  version: 3.14.0
-  resolution: "mysql2@npm:3.14.0"
+"mysql2@npm:^3.14.1":
+  version: 3.14.1
+  resolution: "mysql2@npm:3.14.1"
   dependencies:
     aws-ssl-profiles: "npm:^1.1.1"
     denque: "npm:^2.1.0"
@@ -12355,7 +12355,7 @@ __metadata:
     named-placeholders: "npm:^1.1.3"
     seq-queue: "npm:^0.0.5"
     sqlstring: "npm:^2.3.2"
-  checksum: 10/ce3b965cee87bbe08ea32eb992a5fbe008bbae2b5e77d4c51fd06c2dd9c5c82d77d1687e60e435d3c0c15ea071ae67d723595152d2cfda554c2eb3f61582fdcc
+  checksum: 10/d3eb069b5f42d735df9f89be1c194d432cafe9064ce5d7352eda6597fb90b33e671dd46adc88256174b46c7972db99923f9db702ac2aaf0fbd0430c19dd90ed0
   languageName: node
   linkType: hard
 
@@ -14691,7 +14691,7 @@ __metadata:
     ltijs: "npm:5.9.6"
     mongodb: "npm:6.15.0"
     multer: "npm:^1.4.5-lts.2"
-    mysql2: "npm:^3.14.0"
+    mysql2: "npm:^3.14.1"
     npm-run-all: "npm:^4.1.5"
     openai: "npm:^4.87.3"
     playwright: "npm:^1.51.1"
