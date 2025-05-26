@@ -9191,10 +9191,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fp-ts@npm:2.16.9":
-  version: 2.16.9
-  resolution: "fp-ts@npm:2.16.9"
-  checksum: 10/af5c3fa829456da60ed63b5288907868f0df01a7215acfc5697f621a21f76b0a0f7b7c08ac81f2bcf7ecae13a6c6d41047e739a79cf239db19cd49afd7e8e015
+"fp-ts@npm:2.16.10":
+  version: 2.16.10
+  resolution: "fp-ts@npm:2.16.10"
+  checksum: 10/516d15eb8578c96a818e77870321e335bc0d6c1577d26edec7b7fca0a4eef28e71a5088828f2b12a11ab71fc77e57917b0644d64734f9d6e68727bf9fb0e153d
   languageName: node
   linkType: hard
 
@@ -14940,7 +14940,7 @@ __metadata:
     eslint-plugin-react-hooks: "npm:^5.2.0"
     eslint-plugin-react-refresh: "npm:^0.4.20"
     express: "npm:^4.21.2"
-    fp-ts: "npm:2.16.9"
+    fp-ts: "npm:2.16.10"
     globals: "npm:^16.0.0"
     http-proxy-middleware: "npm:^3.0.3"
     io-ts: "npm:^2.2.22"
