@@ -68,7 +68,7 @@
     "autoprefixer": "^10.4.21",
     "codeceptjs": "^3.7.3",
     "codeceptjs-chai": "^2.3.5",
-    "esbuild": "^0.25.4",
+    "esbuild": "^0.25.6",
     "eslint": "^9.25.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
