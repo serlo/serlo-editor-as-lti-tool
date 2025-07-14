@@ -67,16 +67,14 @@ Scenario(
   }
 )
 
-Scenario.skip('Assets from edu-sharing can be included', ({ I }) => {
+Scenario('Assets from edu-sharing can be included', ({ I }) => {
   openSerloEditorWithLTI(I)
 
   expectEditorOpenedSuccessfully(I)
 
   embedEdusharingAsset(I)
 
-  I.wait(3)
-
-  I.seeElement('div[data-embed-type="image"]')
+  I.waitForElement('div[data-embed-type="image"]', 3)
 })
 
 function embedEdusharingAsset(I: CodeceptJS.I) {
@@ -84,8 +82,8 @@ function embedEdusharingAsset(I: CodeceptJS.I) {
   I.click('Edu-sharing Inhalt')
   I.click('$plugin-edusharing-select-content-button')
   I.switchTo({ css: '[data-qa=plugin-edusharing-selection-iframe]' }) // switch to iframe
+  I.wait(2) // Wait for iframe to be ready
   I.click('#edusharing-embed-image-select')
-  I.wait(1)
   I.switchTo() // switch back to main page
 }
 
