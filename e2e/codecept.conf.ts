@@ -25,9 +25,6 @@ export const config: CodeceptJS.MainConfig = {
     EdusharingHelper: {
       require: './helpers/edusharing-helper.ts',
     },
-    ItslearningHelper: {
-      require: './helpers/itslearning-helper.ts',
-    },
   },
   plugins: {
     customLocator: {
