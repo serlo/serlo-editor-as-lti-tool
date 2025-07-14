@@ -8,7 +8,6 @@ or remove the custom helpers from the config, run `def` and them add them again 
 
 type ChaiWrapper = import('codeceptjs-chai')
 type EdusharingHelper = import('./helpers/edusharing-helper')
-type ItslearningHelper = import('./helpers/itslearning-helper')
 
 declare namespace CodeceptJS {
   interface SupportObject {
@@ -21,8 +20,7 @@ declare namespace CodeceptJS {
       ChaiWrapper,
       REST,
       JSONResponse,
-      EdusharingHelper,
-      ItslearningHelper {}
+      EdusharingHelper {}
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
   interface I extends WithTranslation<Methods> {}
   namespace Translation {
