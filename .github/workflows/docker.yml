@@ -15,7 +15,7 @@ jobs:
     outputs:
       tag: ${{ steps.version.outputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 2
       - uses: salsify/action-detect-and-tag-new-version@v2
@@ -28,7 +28,7 @@ jobs:
     if: ${{ needs.update-version.outputs.tag }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v3
