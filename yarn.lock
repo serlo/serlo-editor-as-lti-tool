@@ -3584,10 +3584,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pkgr/core@npm:^0.2.4":
-  version: 0.2.4
-  resolution: "@pkgr/core@npm:0.2.4"
-  checksum: 10/8544f0346c3f7035b9e2fdf60179c68b12d3c76b3fba9533844099af67cf5c0ce5257538f5faa05953d48cc1536d046f003231f321b2f75b3fb449db8410a2b7
+"@pkgr/core@npm:^0.2.9":
+  version: 0.2.9
+  resolution: "@pkgr/core@npm:0.2.9"
+  checksum: 10/bb2fb86977d63f836f8f5b09015d74e6af6488f7a411dcd2bfdca79d76b5a681a9112f41c45bdf88a9069f049718efc6f3900d7f1de66a2ec966068308ae517f
   languageName: node
   linkType: hard
 
@@ -13883,18 +13883,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier-plugin-packagejson@npm:^2.5.13":
-  version: 2.5.13
-  resolution: "prettier-plugin-packagejson@npm:2.5.13"
+"prettier-plugin-packagejson@npm:^2.5.19":
+  version: 2.5.19
+  resolution: "prettier-plugin-packagejson@npm:2.5.19"
   dependencies:
-    sort-package-json: "npm:3.2.1"
-    synckit: "npm:0.11.5"
+    sort-package-json: "npm:3.4.0"
+    synckit: "npm:0.11.11"
   peerDependencies:
     prettier: ">= 1.16.0"
   peerDependenciesMeta:
     prettier:
       optional: true
-  checksum: 10/7290753f16ddc75cf0cf6489af12e9935d56d32193a65a30d8c9420e3d94a0e5ef5a86d648ba818244f06b45c7f3512eba81372cef0c697b5514c82abff5bc4f
+  checksum: 10/a3caba8b62f92b53a8414cf1061a87bb5931e790c77022c64f3fa12122cf78b392912525deb9671bcdb196106a3078d4dcc6ae076fe2e14e26931b9d9b0195f1
   languageName: node
   linkType: hard
 
@@ -15104,7 +15104,7 @@ __metadata:
     playwright: "npm:^1.52.0"
     postcss: "npm:^8.5.6"
     prettier: "npm:3.6.2"
-    prettier-plugin-packagejson: "npm:^2.5.13"
+    prettier-plugin-packagejson: "npm:^2.5.19"
     react: "npm:^18.3.1"
     react-dom: "npm:^18.3.1"
     tailwindcss: "npm:3"
@@ -15365,9 +15365,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sort-package-json@npm:3.2.1":
-  version: 3.2.1
-  resolution: "sort-package-json@npm:3.2.1"
+"sort-package-json@npm:3.4.0":
+  version: 3.4.0
+  resolution: "sort-package-json@npm:3.4.0"
   dependencies:
     detect-indent: "npm:^7.0.1"
     detect-newline: "npm:^4.0.1"
@@ -15378,7 +15378,7 @@ __metadata:
     tinyglobby: "npm:^0.2.12"
   bin:
     sort-package-json: cli.js
-  checksum: 10/71a84a6f9d68d0ad3b3cbe5091a563115977de758f8578d4db8756a57f7ded6ed93f8a90a36acbf026503a57f70bd835af098422757c89d02cc955ac807b6c4f
+  checksum: 10/f8009b037d0e1ba48819ddf498a34500f778058833b962b5f0d481943def68e2633259e679f29dbb6356fbab2bbc9ffa18524bc6decdcfd4341ab1a6aadee571
   languageName: node
   linkType: hard
 
@@ -15806,13 +15806,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"synckit@npm:0.11.5":
-  version: 0.11.5
-  resolution: "synckit@npm:0.11.5"
+"synckit@npm:0.11.11":
+  version: 0.11.11
+  resolution: "synckit@npm:0.11.11"
   dependencies:
-    "@pkgr/core": "npm:^0.2.4"
-    tslib: "npm:^2.8.1"
-  checksum: 10/de3f10ace0f80ddedb58cc4274b4f6687c14871bcb3231d394b17d784bb3f8747c769dff8976e08717ee38e60f0fe7e111487f19b5eeb4c794c975f062161e0c
+    "@pkgr/core": "npm:^0.2.9"
+  checksum: 10/6ecd88212b5be80004376b6ea74babcba284566ff59a50d8803afcaa78c165b5d268635c1dd84532ee3f690a979409e1eda225a8a35bed2d135ffdcea06ce7b0
   languageName: node
   linkType: hard
 
@@ -16149,7 +16148,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.1.0, tslib@npm:^2.4.0, tslib@npm:^2.8.1":
+"tslib@npm:^2.1.0, tslib@npm:^2.4.0":
   version: 2.8.1
   resolution: "tslib@npm:2.8.1"
   checksum: 10/3e2e043d5c2316461cb54e5c7fe02c30ef6dccb3384717ca22ae5c6b5bc95232a6241df19c622d9c73b809bea33b187f6dbc73030963e29950c2141bc32a79f7
