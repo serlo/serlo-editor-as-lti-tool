@@ -35,7 +35,7 @@
     "@paralleldrive/cuid2": "^2.2.2",
     "@sentry/node": "^10.15.0",
     "@serlo/editor": "0.26.0",
-    "express": "^4.21.2",
+    "express": "^5.1.0",
     "fp-ts": "2.16.10",
     "http-proxy-middleware": "^3.0.5",
     "io-ts": "^2.2.22",
