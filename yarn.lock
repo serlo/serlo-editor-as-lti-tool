@@ -5059,13 +5059,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jsonwebtoken@npm:9.0.8":
-  version: 9.0.8
-  resolution: "@types/jsonwebtoken@npm:9.0.8"
+"@types/jsonwebtoken@npm:9.0.10":
+  version: 9.0.10
+  resolution: "@types/jsonwebtoken@npm:9.0.10"
   dependencies:
     "@types/ms": "npm:*"
     "@types/node": "npm:*"
-  checksum: 10/9747728082bd7877cff6202bb899ad2c9f4d8e22ec672058711089e3a2448f21e235b978a2876e0183802fda452a0abed49614047dae26b820e2f6122d9852b1
+  checksum: 10/d7960d995ad815511c7f4e7f09d91522dfe16e7e800cdd6226c8b1b624c534e0f3b8f8f3beb60e3189865269f028002f1a490189beca5afd02bc96ef1d68f21f
   languageName: node
   linkType: hard
 
@@ -15056,7 +15056,7 @@ __metadata:
     "@paralleldrive/cuid2": "npm:^2.2.2"
     "@sentry/node": "npm:^10.15.0"
     "@serlo/editor": "npm:0.26.0"
-    "@types/jsonwebtoken": "npm:9.0.8"
+    "@types/jsonwebtoken": "npm:9.0.10"
     "@types/lodash": "npm:^4"
     "@types/ltijs": "npm:4.0.12"
     "@types/multer": "npm:^1"
