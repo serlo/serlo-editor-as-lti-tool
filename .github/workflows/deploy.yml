@@ -35,7 +35,7 @@ jobs:
 
       # Maybe split ssh key between production and others
       - name: Deploy to Server
-        uses: appleboy/ssh-action@v1.2.2
+        uses: appleboy/ssh-action@v1.2.3
         with:
           host: ${{  env.REMOTE_HOST }}
           username: ${{ env.REMOTE_USER }}
